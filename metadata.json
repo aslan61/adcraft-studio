@@ -1,0 +1,7 @@
+{
+  "name": "AdCraft Studio",
+  "description": "Transforms raw mobile app screenshots and screen recording videos into high-converting, platform-ready marketing creatives for TikTok, Reels, and App Stores.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

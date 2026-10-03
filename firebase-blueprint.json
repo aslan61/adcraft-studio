@@ -1,0 +1,196 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account profile, authentication state, current tier plan, and available creative credits.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique identifier matching Firebase Auth UID.",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "User primary email address.",
+          "maxLength": 256
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name or team name.",
+          "maxLength": 100
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "User avatar URL.",
+          "maxLength": 1024
+        },
+        "plan": {
+          "type": "string",
+          "description": "Active tier: free, pro, or enterprise.",
+          "enum": ["free", "pro", "enterprise"]
+        },
+        "credits": {
+          "type": "number",
+          "description": "Creative generation and AI rendering credits."
+        },
+        "subscriptionStatus": {
+          "type": "string",
+          "description": "Current status of billing plan: active, inactive, or trial.",
+          "enum": ["active", "inactive", "trial"]
+        },
+        "subscriptionPeriodEnd": {
+          "type": "string",
+          "description": "ISO timestamp for billing renewal."
+        },
+        "dailyAdsWatched": {
+          "type": "number",
+          "description": "Number of rewarded ads completed today."
+        },
+        "lastAdWatchDate": {
+          "type": "string",
+          "description": "YYYY-MM-DD tracking string for daily rewarded ad quota."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp when account was initialized."
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp when user was last updated."
+        }
+      },
+      "required": ["uid", "email", "plan", "credits", "subscriptionStatus", "createdAt"]
+    },
+    "UserSubscription": {
+      "title": "UserSubscription",
+      "description": "Record of purchase transactions, plan upgrades, and credit pack acquisitions.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique transaction or order identifier.",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of customer.",
+          "maxLength": 128
+        },
+        "planId": {
+          "type": "string",
+          "description": "Selected SKU or plan code.",
+          "maxLength": 64
+        },
+        "planName": {
+          "type": "string",
+          "description": "Human-readable plan name.",
+          "maxLength": 100
+        },
+        "amount": {
+          "type": "number",
+          "description": "Price paid in currency."
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency ISO code, e.g. USD or TRY.",
+          "maxLength": 10
+        },
+        "status": {
+          "type": "string",
+          "description": "Payment outcome: completed, pending, or refunded.",
+          "enum": ["completed", "pending", "refunded"]
+        },
+        "creditsGranted": {
+          "type": "number",
+          "description": "Credits added to user account."
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "Method of payment, e.g. Credit Card, Apple Pay, Google Pay.",
+          "maxLength": 50
+        },
+        "invoiceNumber": {
+          "type": "string",
+          "description": "Generated receipt invoice number.",
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp when purchase completed."
+        }
+      },
+      "required": ["id", "userId", "planId", "planName", "amount", "status", "creditsGranted", "createdAt"]
+    },
+    "UserCampaign": {
+      "title": "UserCampaign",
+      "description": "Persisted ad campaign creatives and project state belonging to a user.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Campaign identifier.",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of owner.",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "description": "Campaign title.",
+          "maxLength": 120
+        },
+        "workspace": {
+          "type": "string",
+          "description": "Workspace or brand tag.",
+          "maxLength": 100
+        },
+        "headline": {
+          "type": "string",
+          "description": "Opening hook copy.",
+          "maxLength": 150
+        },
+        "subHook": {
+          "type": "string",
+          "description": "Secondary hook copy.",
+          "maxLength": 200
+        },
+        "ctaText": {
+          "type": "string",
+          "description": "Call to action label.",
+          "maxLength": 50
+        },
+        "aspectRatio": {
+          "type": "string",
+          "description": "Canvas format.",
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last modified timestamp."
+        }
+      },
+      "required": ["id", "userId", "name", "headline", "ctaText", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Isolated user profile, current subscription plan, and credit balance."
+    },
+    "/users/{userId}/subscriptions/{subscriptionId}": {
+      "schema": "UserSubscription",
+      "description": "Customer purchase transaction history and receipt logs."
+    },
+    "/users/{userId}/campaigns/{campaignId}": {
+      "schema": "UserCampaign",
+      "description": "Saved ad campaign configurations, copy variations, and assets."
+    }
+  }
+}

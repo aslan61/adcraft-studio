@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AdCraft Studio — Mobile App Ad Creative Synthesizer</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g1' x1='4' y1='4' x2='20' y2='32' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0%25' stop-color='%23818CF8'/%3E%3Cstop offset='50%25' stop-color='%236366F1'/%3E%3Cstop offset='100%25' stop-color='%234338CA'/%3E%3C/linearGradient%3E%3ClinearGradient id='g2' x1='16' y1='4' x2='32' y2='32' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0%25' stop-color='%2338BDF8'/%3E%3Cstop offset='50%25' stop-color='%230EA5E9'/%3E%3Cstop offset='100%25' stop-color='%232563EB'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='36' height='36' rx='9' fill='%230F131D'/%3E%3Cpath d='M18 5L7 27H13L15.8 21.4H20.2L18 17H16.5L18 14L22 21.4H29L18 5Z' fill='url(%23g1)'/%3E%3Cpath d='M23.5 12.5L29 27H23L21.4 23H17.8L20 18.5H22.5L19.5 12.5H23.5Z' fill='url(%23g2)' fill-opacity='0.9'/%3E%3Cpolygon points='18,13 21.5,20 14.5,20' fill='%23FFFFFF'/%3E%3C/svg%3E" />
+    <meta name="description" content="Transforms raw mobile app screenshots and screen recording videos into high-converting, platform-ready marketing creatives for TikTok, Reels, and App Stores." />
+    <meta property="og:title" content="AdCraft Studio — Mobile App Ad Creative Synthesizer" />
+    <meta property="og:description" content="Transforms raw mobile app screenshots and screen recording videos into high-converting, platform-ready marketing creatives for TikTok, Reels, and App Stores." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      (function() {
+        function isBenignWsError(err) {
+          if (!err) return false;
+          var str = String(err.message || err.reason || err || '');
+          return str.indexOf('WebSocket') !== -1 || str.indexOf('websocket') !== -1 || str.indexOf('[vite]') !== -1;
+        }
+
+        window.addEventListener('unhandledrejection', function(event) {
+          if (isBenignWsError(event.reason)) {
+            event.preventDefault();
+            if (typeof event.stopImmediatePropagation === 'function') {
+              event.stopImmediatePropagation();
+            }
+          }
+        }, true);
+
+        window.addEventListener('error', function(event) {
+          if (isBenignWsError(event.error) || isBenignWsError(event.message)) {
+            event.preventDefault();
+            if (typeof event.stopImmediatePropagation === 'function') {
+              event.stopImmediatePropagation();
+            }
+          }
+        }, true);
+
+        var origConsoleError = console.error;
+        console.error = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var msg = args.map(function(a) { return String((a && a.message) || a || ''); }).join(' ');
+          if (isBenignWsError(msg)) {
+            return;
+          }
+          return origConsoleError.apply(console, args);
+        };
+
+        var origConsoleWarn = console.warn;
+        console.warn = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var msg = args.map(function(a) { return String((a && a.message) || a || ''); }).join(' ');
+          if (isBenignWsError(msg)) {
+            return;
+          }
+          return origConsoleWarn.apply(console, args);
+        };
+      })();
+    </script>
+  </head>
+  <body class="bg-[#07090F] text-[#E1E2EC] antialiased selection:bg-indigo-500/30 selection:text-white">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
