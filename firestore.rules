@@ -73,6 +73,11 @@ service cloud.firestore {
         && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
     }
 
+    // Connection test document for startup check
+    match /test/connection {
+      allow get: if true;
+    }
+
     // User Profile Document Root
     match /users/{userId} {
       allow get: if isOwner(userId) && isValidId(userId);

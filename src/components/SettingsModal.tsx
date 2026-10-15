@@ -3,6 +3,7 @@ import { X, Sliders, Check, HardDrive, Cpu, Globe, Sun, Moon, Key, Eye, EyeOff, 
 import { useAdCraftStore } from '../store/useAdCraftStore';
 import { soundEngine } from '../utils/audioEngine';
 import { useTranslation } from '../i18n/translations';
+import { clientAiService } from '../services/clientAiService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -42,12 +43,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     setKeyTestStatus('testing');
     setKeyTestMessage(null);
     try {
-      const res = await fetch('/api/ai/test-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: localApiKey.trim() || undefined })
-      });
-      const data = await res.json();
+      const data = await clientAiService.testKey(localApiKey.trim());
       if (data.success) {
         soundEngine.playSuccess();
         setKeyTestStatus('success');

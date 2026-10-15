@@ -18,6 +18,7 @@ import { useAdCraftStore } from '../store/useAdCraftStore';
 import { soundEngine } from '../utils/audioEngine';
 import { useTranslation } from '../i18n/translations';
 import { VoiceoverCue } from '../types';
+import { clientAiService } from '../services/clientAiService';
 
 export const VoiceoverStudioModal: React.FC = () => {
   const { t, language } = useTranslation();
@@ -112,24 +113,17 @@ export const VoiceoverStudioModal: React.FC = () => {
     soundEngine.playWhoosh();
     setIsGenerating(true);
     try {
-      const res = await fetch('/api/ai/voiceover-script', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(geminiApiKey ? { 'x-gemini-api-key': geminiApiKey } : {})
-        },
-        body: JSON.stringify({
-          appName: projectName,
-          hookHeadline: hookCopy.headline,
-          subHook: hookCopy.subHook,
-          ctaText: hookCopy.ctaText,
-          toneArchetype: hookCopy.toneArchetype,
-          durationSec: 15,
-          language
-        })
+      const data = await clientAiService.generateVoiceoverScript({
+        appName: projectName,
+        hookHeadline: hookCopy.headline,
+        subHook: hookCopy.subHook,
+        ctaText: hookCopy.ctaText,
+        toneArchetype: hookCopy.toneArchetype,
+        durationSec: 15,
+        language,
+        geminiApiKey
       });
 
-      const data = await res.json();
       if (data.success && data.voiceover) {
         soundEngine.playSuccess();
         if (data.voiceover.fullScript) {

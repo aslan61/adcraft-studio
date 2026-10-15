@@ -22,6 +22,7 @@ import confetti from 'canvas-confetti';
 import { useAdCraftStore } from '../store/useAdCraftStore';
 import { soundEngine } from '../utils/audioEngine';
 import { useTranslation } from '../i18n/translations';
+import { clientAiService } from '../services/clientAiService';
 
 interface AuditData {
   complianceScore: number;
@@ -149,21 +150,14 @@ ${audit.recommendations.map((r, i) => `${i + 1}. ${r}`).join('\n')}
     setIsAuditing(true);
     soundEngine.playWhoosh();
     try {
-      const res = await fetch('/api/audit-creative', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(geminiApiKey ? { 'x-gemini-api-key': geminiApiKey } : {})
-        },
-        body: JSON.stringify({
-          hookCopy,
-          aspectRatio,
-          channelRules,
-          deviceConfig,
-          language
-        })
+      const data = await clientAiService.auditCreative({
+        hookCopy,
+        aspectRatio,
+        channelRules,
+        deviceConfig,
+        language,
+        geminiApiKey
       });
-      const data = await res.json();
       if (data.success && data.audit) {
         setAudit(data.audit);
         soundEngine.playSuccess();

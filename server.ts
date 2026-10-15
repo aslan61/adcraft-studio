@@ -190,7 +190,7 @@ app.get('/api/health', (req, res) => {
 
   res.json({
     status: 'ok',
-    version: '1.1.0',
+    version: '1.2.0',
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime()),
     geminiKeyConfigured: !!(effectiveKey && effectiveKey.trim()),
@@ -210,7 +210,7 @@ app.get('/api/engine/status', (req, res) => {
   const hasKey = !!(clientKey || process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY);
   res.json({
     success: true,
-    version: '1.1.0',
+    version: '1.2.0',
     engine: 'AdCraft Creative Synthesizer AI v3.4',
     gpuWorkerCluster: 'NVIDIA A100-SXM4-80GB (WebGPU Accelerated)',
     primaryModel: 'gemini-2.5-flash',
@@ -255,6 +255,7 @@ app.post('/api/ai/test-key', async (req, res) => {
         status: 'connected',
         model: 'gemini-2.5-flash',
         latencyMs,
+        source: (req.body?.apiKey || req.headers['x-gemini-api-key']) ? 'client_custom' : 'server_env',
         message: 'Google Gemini 2.5 Flash canlı yapay zeka motoruna başarıyla bağlandı!'
       });
     }
@@ -753,7 +754,9 @@ Return strict JSON format:
               data: base64Data
             }
           },
-          prompt
+          {
+            text: prompt
+          }
         ];
       } else {
         contents = prompt;

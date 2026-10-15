@@ -32,6 +32,7 @@ import {
 import { soundEngine } from '../utils/audioEngine';
 import { exportCanvasSnapshot, exportCanvasVideo } from '../utils/exportPipeline';
 import { useTranslation } from '../i18n/translations';
+import { clientAiService } from '../services/clientAiService';
 
 interface ControlPanelProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
@@ -104,36 +105,29 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ canvasRef, onOpenAdP
     { type: 'FOMO Urgency' as const, label: language === 'tr' ? 'FOMO Aciliyet' : 'FOMO Urgency', icon: Clock }
   ];
 
-  // Request AI Variations from Gemini / Server
+  // Request AI Variations from Gemini / Server / Standalone Engine
   const handleGenerateAiVariations = async () => {
     setIsGeneratingAi(true);
     soundEngine.playWhoosh();
 
     try {
-      const res = await fetch('/api/generate-hooks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(geminiApiKey ? { 'x-gemini-api-key': geminiApiKey } : {})
-        },
-        body: JSON.stringify({
-          appName: projectName || 'NeonRider',
-          appCategory: 'Hyper-Casual Racing Game',
-          toneArchetype: hookCopy.toneArchetype,
-          currentHook: hookCopy.headline,
-          customPrompt: customPrompt.trim() || undefined,
-          language
-        })
+      const json = await clientAiService.generateHooks({
+        appName: projectName || 'NeonRider',
+        appCategory: 'Hyper-Casual Racing Game',
+        toneArchetype: hookCopy.toneArchetype,
+        currentHook: hookCopy.headline,
+        customPrompt: customPrompt.trim() || undefined,
+        language,
+        geminiApiKey
       });
 
-      const json = await res.json();
       if (json.success && json.hooks) {
         setAiVariations(json.hooks);
         setShowVariationsModal(true);
         soundEngine.playClick();
       }
     } catch (e) {
-      console.warn('AI variation generation fallback', e);
+      console.warn('AI variation generation notice:', e);
     } finally {
       setIsGeneratingAi(false);
     }
@@ -145,29 +139,22 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ canvasRef, onOpenAdP
     soundEngine.playWhoosh();
 
     try {
-      const res = await fetch('/api/generate-storyboard', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(geminiApiKey ? { 'x-gemini-api-key': geminiApiKey } : {})
-        },
-        body: JSON.stringify({
-          appName: projectName || 'NeonRider',
-          hookHeadline: hookCopy.headline,
-          toneArchetype: hookCopy.toneArchetype,
-          totalDuration: 15,
-          language
-        })
+      const json = await clientAiService.generateStoryboard({
+        appName: projectName || 'NeonRider',
+        hookHeadline: hookCopy.headline,
+        toneArchetype: hookCopy.toneArchetype,
+        totalDuration: 15,
+        language,
+        geminiApiKey
       });
 
-      const json = await res.json();
       if (json.success && json.storyboard) {
         setStoryboardData(json.storyboard);
         setShowStoryboardModal(true);
         soundEngine.playClick();
       }
     } catch (e) {
-      console.warn('Storyboard generation fallback', e);
+      console.warn('Storyboard generation notice:', e);
     } finally {
       setIsGeneratingStoryboard(false);
     }

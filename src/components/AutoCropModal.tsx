@@ -24,6 +24,7 @@ import { useAdCraftStore } from '../store/useAdCraftStore';
 import { useTranslation } from '../i18n/translations';
 import { soundEngine } from '../utils/audioEngine';
 import { AutoCropPreset, CropConfig, DetectedInterfaceElement } from '../types';
+import { clientAiService } from '../services/clientAiService';
 
 export const AutoCropModal: React.FC = () => {
   const { t, language } = useTranslation();
@@ -83,34 +84,23 @@ export const AutoCropModal: React.FC = () => {
   const currentCropX = Math.max(0, Math.min(100 - baseCropW, Number((focalX - baseCropW / 2).toFixed(2))));
   const currentCropY = Math.max(0, Math.min(100 - baseCropH, Number((focalY - baseCropH / 2).toFixed(2))));
 
-  // Run AI Detection through our server endpoint
+  // Run AI Detection through our resilient service
   const handleRunAiDetection = useCallback(async (selectedPreset: AutoCropPreset = preset) => {
     if (!targetAsset) return;
     setIsScanning(true);
     soundEngine.playWhoosh();
 
     try {
-      const response = await fetch('/api/ai/auto-crop', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(geminiApiKey ? { 'x-gemini-api-key': geminiApiKey } : {})
-        },
-        body: JSON.stringify({
-          assetId: targetAsset.id,
-          assetUrl: targetAsset.url,
-          assetName: targetAsset.name,
-          assetResolution: targetAsset.resolution,
-          preset: selectedPreset,
-          frameDataUrl: targetAsset.extractedFrames?.[0] || undefined
-        })
+      const data = await clientAiService.autoCropDetect({
+        assetId: targetAsset.id,
+        assetUrl: targetAsset.url,
+        assetName: targetAsset.name,
+        assetResolution: targetAsset.resolution,
+        preset: selectedPreset,
+        frameDataUrl: targetAsset.extractedFrames?.[0] || undefined,
+        geminiApiKey
       });
 
-      if (!response.ok) {
-        throw new Error('Server AI detection call returned non-200');
-      }
-
-      const data = await response.json();
       if (data && data.cropConfig) {
         const cfg: CropConfig = data.cropConfig;
         setFocalX(cfg.focalX);
@@ -122,7 +112,7 @@ export const AutoCropModal: React.FC = () => {
         soundEngine.playSuccess();
       }
     } catch (err) {
-      console.warn('AI detection fallback used:', err);
+      console.warn('AI detection notice:', err);
       // Fallback local detection
       setFocalX(50);
       setFocalY(50);

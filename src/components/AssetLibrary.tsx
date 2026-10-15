@@ -20,6 +20,7 @@ import { MediaAsset } from '../types';
 import { extractVideoFrames } from '../utils/frameExtractor';
 import { soundEngine } from '../utils/audioEngine';
 import { useTranslation } from '../i18n/translations';
+import { clientAiService } from '../services/clientAiService';
 
 export const AssetLibrary: React.FC = () => {
   const { t, language } = useTranslation();
@@ -167,16 +168,8 @@ export const AssetLibrary: React.FC = () => {
     soundEngine.playClick();
 
     try {
-      const res = await fetch('/api/scrape-store', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(geminiApiKey ? { 'x-gemini-api-key': geminiApiKey } : {})
-        },
-        body: JSON.stringify({ url: storeUrl })
-      });
+      const json = await clientAiService.scrapeStore(storeUrl, geminiApiKey, language);
 
-      const json = await res.json();
       if (json.success && json.data) {
         soundEngine.playWhoosh();
         setHookCopy({
@@ -205,7 +198,7 @@ export const AssetLibrary: React.FC = () => {
         }
       }
     } catch (e) {
-      console.warn('Store sync simulated fallback', e);
+      console.warn('Store sync notice:', e);
     } finally {
       setIsSyncingStore(false);
     }

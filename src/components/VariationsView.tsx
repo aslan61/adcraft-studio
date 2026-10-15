@@ -19,6 +19,7 @@ import { soundEngine } from '../utils/audioEngine';
 import { useTranslation } from '../i18n/translations';
 import { INITIAL_VARIATIONS, AdVariationItem, getInitialVariations } from '../data/variationsCatalog';
 import { RenderItem } from '../types';
+import { clientAiService } from '../services/clientAiService';
 
 interface VariationsViewProps {
   onOpenExportQueue?: () => void;
@@ -53,27 +54,20 @@ export const VariationsView: React.FC<VariationsViewProps> = ({ onOpenExportQueu
     setIsGenerating(true);
     soundEngine.playWhoosh();
     try {
-      const res = await fetch('/api/variations/matrix', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(geminiApiKey ? { 'x-gemini-api-key': geminiApiKey } : {})
-        },
-        body: JSON.stringify({
-          appName: projectName,
-          seedHook: hookCopy.headline,
-          toneArchetype: hookCopy.toneArchetype,
-          customPrompt: customAngle,
-          language
-        })
+      const data = await clientAiService.generateVariationsMatrix({
+        appName: projectName,
+        seedHook: hookCopy.headline,
+        toneArchetype: hookCopy.toneArchetype,
+        customPrompt: customAngle,
+        language,
+        geminiApiKey
       });
-      const data = await res.json();
       if (data.success && Array.isArray(data.variations)) {
         setVariations(data.variations);
         soundEngine.playSuccess();
       }
     } catch (e) {
-      console.warn('Matrix generation error:', e);
+      console.warn('Matrix generation notice:', e);
     } finally {
       setIsGenerating(false);
     }
