@@ -1,6 +1,8 @@
-# 🎬 AdCraft Studio (v1.1.0)
+# 🎬 AdCraft Studio (v1.2.0)
 ### AI-Powered High-Converting Video Ad & Creative Production Studio
 
+> **Live Web App:** [https://aslan61.github.io/adcraft-studio/](https://aslan61.github.io/adcraft-studio/)
+>
 > **Transform raw mobile app/gameplay screen recordings into high-converting 9:16, 1:1, 16:9, and 2:3 vertical ads for TikTok, Instagram Reels, YouTube Shorts, and App Stores.**
 
 ---

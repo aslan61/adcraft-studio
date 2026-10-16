@@ -270,7 +270,7 @@ export async function incrementUserCreditsFromRewardedAd(
         id: recordId,
         userId,
         planId: 'rewarded_ad',
-        planName: sponsorInfo?.title ? `Ad: ${sponsorInfo.title}` : `Watch Ad for Free Credits (+${creditsGranted})`,
+        planName: (sponsorInfo?.title ? `Ad: ${sponsorInfo.title}` : `Watch Ad for Free Credits (+${creditsGranted})`).slice(0, 95),
         amount: 0,
         currency: 'USD',
         status: 'completed',
@@ -296,10 +296,15 @@ export async function incrementUserCreditsFromRewardedAd(
 
 // Record purchase transaction in Firestore
 export async function recordPurchase(record: PurchaseRecord): Promise<void> {
-  const subPath = `users/${record.userId}/subscriptions/${record.id}`;
+  const sanitizedRecord: PurchaseRecord = {
+    ...record,
+    id: record.id.slice(0, 120),
+    planName: record.planName.slice(0, 95)
+  };
+  const subPath = `users/${sanitizedRecord.userId}/subscriptions/${sanitizedRecord.id}`;
   try {
-    const subDocRef = doc(db, 'users', record.userId, 'subscriptions', record.id);
-    await setDoc(subDocRef, record);
+    const subDocRef = doc(db, 'users', sanitizedRecord.userId, 'subscriptions', sanitizedRecord.id);
+    await setDoc(subDocRef, sanitizedRecord);
 
     // Update user credits & plan in user profile
     const current = await getUserProfile(record.userId);

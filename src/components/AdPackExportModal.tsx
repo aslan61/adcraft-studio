@@ -308,7 +308,10 @@ export const AdPackExportModal: React.FC<AdPackExportModalProps> = ({
                 setIsZipping(true);
                 setZipProgress(20);
                 try {
-                  const canvasEl = canvasRef.current || (document.querySelector('canvas') as HTMLCanvasElement | null);
+                  const canvasEl =
+                    canvasRef.current ||
+                    (document.getElementById('adcraft-export-canvas') as HTMLCanvasElement | null) ||
+                    (document.querySelector('canvas') as HTMLCanvasElement | null);
                   await exportCreativeZipPack({
                     canvasElement: canvasEl,
                     projectName: `AdCraft_${hookCopy.headline.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 16)}`,
