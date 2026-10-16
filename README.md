@@ -1,4 +1,4 @@
-# 🎬 AdCraft Studio (v1.2.0)
+# 🎬 AdCraft Studio (v1.2.1)
 ### AI-Powered High-Converting Video Ad & Creative Production Studio
 
 > **Live Web App:** [https://aslan61.github.io/adcraft-studio/](https://aslan61.github.io/adcraft-studio/)

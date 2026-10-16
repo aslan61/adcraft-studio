@@ -353,6 +353,19 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ canvasRef }) => 
         loadedImageRef.current = img;
         renderScene(timeline.currentTime);
       };
+      img.onerror = () => {
+        // Fallback without crossOrigin in case CORS headers are restricted
+        const fallback = new Image();
+        fallback.onload = () => {
+          loadedImageRef.current = fallback;
+          renderScene(timeline.currentTime);
+        };
+        fallback.onerror = () => {
+          loadedImageRef.current = null;
+          renderScene(timeline.currentTime);
+        };
+        fallback.src = assetUrl;
+      };
       img.src = assetUrl;
     }
 
