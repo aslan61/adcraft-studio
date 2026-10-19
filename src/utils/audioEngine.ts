@@ -9,22 +9,46 @@ class SoundEngine {
   private currentBeatInterval: number | null = null;
   private isBeatPlaying: boolean = false;
   private masterGainNode: GainNode | null = null;
+  private streamDestination: MediaStreamAudioDestinationNode | null = null;
   private currentVolume: number = 0.5;
+  private currentGenre: string = 'Phonk';
 
   private getContext(): AudioContext {
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new AudioCtx();
     }
+    if (!this.streamDestination && this.ctx && typeof this.ctx.createMediaStreamDestination === 'function') {
+      try {
+        this.streamDestination = this.ctx.createMediaStreamDestination();
+      } catch {
+        // Fallback
+      }
+    }
     if (!this.masterGainNode && this.ctx) {
       this.masterGainNode = this.ctx.createGain();
       this.masterGainNode.gain.setValueAtTime(this.isMuted ? 0 : this.currentVolume, this.ctx.currentTime);
       this.masterGainNode.connect(this.ctx.destination);
+      if (this.streamDestination) {
+        try {
+          this.masterGainNode.connect(this.streamDestination);
+        } catch {
+          // Fallback
+        }
+      }
     }
     if (this.ctx.state === 'suspended') {
       this.ctx.resume().catch(() => {});
     }
     return this.ctx;
+  }
+
+  public getAudioTracks(): MediaStreamTrack[] {
+    this.getContext();
+    if (this.streamDestination) {
+      return this.streamDestination.stream.getAudioTracks();
+    }
+    return [];
   }
 
   private getMasterDestination(): AudioNode {
@@ -102,9 +126,10 @@ class SoundEngine {
     osc.stop(time + 0.26);
   }
 
-  // Start background rhythmic beat loop (Phonk Drift style: ~130 BPM)
-  public startSoundtrack(volume = 0.5) {
+  // Start background rhythmic beat loop (supports Phonk, Synthwave, EDM, Lo-Fi)
+  public startSoundtrack(volume = 0.5, genre = 'Phonk') {
     this.currentVolume = volume;
+    this.currentGenre = genre;
     if (this.isMuted) return;
     if (this.isBeatPlaying) {
       this.setMasterVolume(volume);
@@ -117,30 +142,75 @@ class SoundEngine {
       }
       this.isBeatPlaying = true;
       let step = 0;
-      const bpm = 132;
+
+      const isSynthwave = /synthwave|cyber|cyberpunk/i.test(genre);
+      const isEdm = /edm|hyper|house/i.test(genre);
+      const isLofi = /lo-fi|lofi|chill/i.test(genre);
+
+      const bpm = isSynthwave ? 116 : isEdm ? 128 : isLofi ? 84 : 132;
       const stepDuration = (60 / bpm) / 4; // 16th notes
 
-      const pentatonic = [146.83, 164.81, 196.0, 220.0, 261.63, 293.66]; // D minor pentatonic
+      // Scales
+      const phonkScale = [146.83, 164.81, 196.0, 220.0, 261.63, 293.66]; // D minor pentatonic
+      const synthScale = [130.81, 146.83, 164.81, 196.0, 220.0, 261.63]; // Retro synth minor
+      const edmScale = [174.61, 196.0, 220.0, 261.63, 329.63, 349.23];   // F Major / D min
+      const lofiScale = [174.61, 220.0, 261.63, 329.63, 392.0];          // Mellow 7th / 9th chords
+
+      const activeScale = isSynthwave ? synthScale : isEdm ? edmScale : isLofi ? lofiScale : phonkScale;
 
       this.currentBeatInterval = window.setInterval(() => {
         if (!this.isBeatPlaying) return;
         const now = ctx.currentTime;
         const s = step % 16;
 
-        // Kick on 0, 4, 8, 12 + syncopation
-        if (s === 0 || s === 7 || s === 10) {
-          this.play808Kick(ctx, now, 0.6);
-        }
-
-        // Hi-hats on offbeats
-        if (s % 2 === 0 || s === 15) {
-          this.playHiHat(ctx, now, 0.25);
-        }
-
-        // Phonk cowbell / synth lead melody
-        if (s === 0 || s === 3 || s === 6 || s === 10 || s === 14) {
-          const noteIndex = Math.floor(Math.random() * pentatonic.length);
-          this.playPhonkLead(ctx, now, pentatonic[noteIndex] * 2, 0.22);
+        if (isLofi) {
+          // Relaxed Lo-Fi groove
+          if (s === 0 || s === 10) {
+            this.play808Kick(ctx, now, 0.4);
+          }
+          if (s % 4 === 2) {
+            this.playHiHat(ctx, now, 0.12);
+          }
+          if (s === 0 || s === 6 || s === 12) {
+            const note = activeScale[Math.floor(Math.random() * activeScale.length)];
+            this.playPhonkLead(ctx, now, note * 1.5, 0.16);
+          }
+        } else if (isSynthwave) {
+          // Retro driving Synthwave pulse
+          if (s % 4 === 0) {
+            this.play808Kick(ctx, now, 0.55);
+          }
+          if (s % 2 === 1) {
+            this.playHiHat(ctx, now, 0.2);
+          }
+          if (s === 0 || s === 4 || s === 7 || s === 11 || s === 14) {
+            const note = activeScale[step % activeScale.length];
+            this.playPhonkLead(ctx, now, note * 2, 0.2);
+          }
+        } else if (isEdm) {
+          // 4-on-the-floor festival EDM
+          if (s % 4 === 0) {
+            this.play808Kick(ctx, now, 0.65);
+          }
+          if (s % 4 === 2 || s === 15) {
+            this.playHiHat(ctx, now, 0.3);
+          }
+          if (s % 2 === 0) {
+            const note = activeScale[(step * 2) % activeScale.length];
+            this.playPhonkLead(ctx, now, note * 2.5, 0.24);
+          }
+        } else {
+          // Classic High-Adrenaline Phonk Drift
+          if (s === 0 || s === 7 || s === 10) {
+            this.play808Kick(ctx, now, 0.6);
+          }
+          if (s % 2 === 0 || s === 15) {
+            this.playHiHat(ctx, now, 0.25);
+          }
+          if (s === 0 || s === 3 || s === 6 || s === 10 || s === 14) {
+            const note = activeScale[Math.floor(Math.random() * activeScale.length)];
+            this.playPhonkLead(ctx, now, note * 2, 0.22);
+          }
         }
 
         step++;

@@ -122,7 +122,7 @@ export const TimelineSequencer: React.FC = () => {
 
     if (timeline.isPlaying) {
       if (!audioConfig.isMuted && audioConfig.volume > 0) {
-        soundEngine.startSoundtrack(audioConfig.volume);
+        soundEngine.startSoundtrack(audioConfig.volume, audioConfig.genre);
       } else {
         soundEngine.stopSoundtrack();
       }
@@ -169,6 +169,7 @@ export const TimelineSequencer: React.FC = () => {
     timeline.totalDuration,
     audioConfig.volume,
     audioConfig.isMuted,
+    audioConfig.genre,
     audioConfig.voiceover,
     setCurrentTime,
     setIsPlaying
@@ -546,7 +547,7 @@ export const TimelineSequencer: React.FC = () => {
           </div>
         </div>
 
-        {/* Track 4: Audio Track Waveform */}
+        {/* Track 4: Audio Track Waveform & Genre Selector */}
         <div className="flex items-center h-8 bg-slate-900/60 border border-slate-800/80 rounded-lg overflow-hidden relative">
           <div className="w-36 px-2.5 text-slate-400 font-['JetBrains_Mono'] text-xs truncate shrink-0 flex items-center gap-1.5 bg-slate-900/90 h-full border-r border-slate-800">
             <Music className="w-3.5 h-3.5 text-cyan-400" />
@@ -554,8 +555,56 @@ export const TimelineSequencer: React.FC = () => {
           </div>
           <div className="flex-1 h-full relative flex items-center px-1">
             <div className="w-[96%] h-6 bg-cyan-500/15 border border-cyan-500/30 rounded flex items-center px-2 justify-between overflow-hidden relative">
-              {/* Dynamic Sound Wave SVG */}
-              <svg className="w-full h-4 text-cyan-400/70" viewBox="0 0 400 20" preserveAspectRatio="none">
+              <div className="flex items-center gap-1.5 z-10 truncate">
+                <span className="font-['JetBrains_Mono'] text-xs text-cyan-300 font-semibold truncate">
+                  {audioConfig.name || 'Phonk Drift - Ultra Club'}
+                </span>
+                <span className="text-[10px] text-cyan-400 font-mono px-1.5 py-0.2 rounded bg-cyan-950/60 border border-cyan-500/30 shrink-0">
+                  {audioConfig.genre || 'Phonk'}
+                </span>
+              </div>
+
+              {/* Genre Selector Buttons */}
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 z-10 text-[10px] font-['JetBrains_Mono'] shrink-0"
+              >
+                {[
+                  { id: 'Phonk', label: 'Phonk', name: 'Phonk Drift (132 BPM)' },
+                  { id: 'Cyberpunk Synthwave', label: 'Synth', name: 'Synthwave (116 BPM)' },
+                  { id: 'Hyper EDM Drop', label: 'EDM', name: 'EDM Drop (128 BPM)' },
+                  { id: 'Lo-Fi Chill Hop', label: 'Lo-Fi', name: 'Lo-Fi Chill (84 BPM)' }
+                ].map((g) => {
+                  const isCurrent = (audioConfig.genre || 'Phonk').toLowerCase().includes(g.id.toLowerCase().slice(0, 4));
+                  return (
+                    <button
+                      key={g.id}
+                      onClick={() => {
+                        soundEngine.playClick();
+                        setAudioConfig({
+                          name: g.name,
+                          genre: g.id
+                        });
+                        if (timeline.isPlaying) {
+                          soundEngine.stopSoundtrack();
+                          soundEngine.startSoundtrack(audioConfig.volume, g.id);
+                        }
+                      }}
+                      className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+                        isCurrent
+                          ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
+                      }`}
+                      title={g.name}
+                    >
+                      {g.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Dynamic Sound Wave SVG Background */}
+              <svg className="absolute inset-0 w-full h-full text-cyan-400/20 pointer-events-none" viewBox="0 0 400 20" preserveAspectRatio="none">
                 <path
                   d="M0 10 Q10 2 20 10 T40 10 T60 3 T80 18 T100 8 T120 10 T140 2 T160 17 T180 8 T200 12 T220 2 T240 18 T260 9 T280 12 T300 10 T320 3 T340 18 T360 8 T380 12 T400 10"
                   fill="none"

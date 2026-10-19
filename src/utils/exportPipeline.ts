@@ -94,11 +94,22 @@ export async function exportCanvasVideo(options: ExportOptions): Promise<string>
   return new Promise((resolve, reject) => {
     try {
       const stream = canvasElement.captureStream(fps);
+
+      // Mix in Web Audio API soundtrack & sound effects into the output video
+      try {
+        const audioTracks = soundEngine.getAudioTracks();
+        if (audioTracks && audioTracks.length > 0) {
+          audioTracks.forEach((track) => stream.addTrack(track));
+        }
+      } catch (audioErr) {
+        console.warn('Canvas audio track injection notice:', audioErr);
+      }
+
       const mimeTypes = [
-        'video/mp4;codecs=avc1',
+        'video/mp4;codecs=avc1,mp4a.40.2',
         'video/mp4',
-        'video/webm;codecs=vp9',
-        'video/webm;codecs=vp8',
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
         'video/webm'
       ];
       const selectedMime = mimeTypes.find((m) => MediaRecorder.isTypeSupported(m)) || 'video/webm';
@@ -137,6 +148,9 @@ export async function exportCanvasVideo(options: ExportOptions): Promise<string>
       recorder.onstop = () => {
         clearInterval(progressInterval);
         clearInterval(renderTimer);
+        try {
+          soundEngine.stopSoundtrack();
+        } catch {}
         if (onProgress) onProgress(100);
 
         const isMp4 = selectedMime.includes('mp4');
@@ -163,6 +177,11 @@ export async function exportCanvasVideo(options: ExportOptions): Promise<string>
 
         resolve(url);
       };
+
+      // Start soundtrack during video recording so audio frames are recorded into the stream
+      try {
+        soundEngine.startSoundtrack(0.65);
+      } catch {}
 
       recorder.start(200);
 
