@@ -20,7 +20,8 @@ import {
   Sliders,
   Check,
   Eye,
-  RefreshCw
+  RefreshCw,
+  Smartphone
 } from 'lucide-react';
 import { useNotificationStore, NotificationItem } from '../store/useNotificationStore';
 import { useAdCraftStore } from '../store/useAdCraftStore';
@@ -46,7 +47,9 @@ export const AndroidNotificationDrawer: React.FC<AndroidNotificationDrawerProps>
     setQaTestModalOpen,
     latestQaReport,
     lastTestedAt,
-    triggerTestReminder
+    triggerTestReminder,
+    nativePermission,
+    requestNativePermission
   } = useNotificationStore();
 
   const { showSafeZones, toggleSafeZones } = useAdCraftStore();
@@ -245,6 +248,33 @@ export const AndroidNotificationDrawer: React.FC<AndroidNotificationDrawerProps>
             </button>
           </div>
         </div>
+
+        {/* Native Android OS Notification Integration Pill */}
+        {nativePermission !== 'granted' ? (
+          <div className="px-4 py-2.5 bg-indigo-950/40 border-b border-indigo-500/20 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Smartphone className="w-4 h-4 text-indigo-400 shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-white">Android Sistem Bildirimleri</span>
+                <span className="text-[10px] text-slate-400">Tarayıcı arkadayken test hatırlatmalarını al</span>
+              </div>
+            </div>
+            <button
+              onClick={requestNativePermission}
+              className="px-3 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold shadow transition-all cursor-pointer whitespace-nowrap"
+            >
+              İzin Ver
+            </button>
+          </div>
+        ) : (
+          <div className="px-4 py-1.5 bg-emerald-950/30 border-b border-emerald-500/20 flex items-center justify-between text-[11px] text-emerald-300">
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Android Sistem Bildirimleri: Aktif</span>
+            </div>
+            <span className="text-[10px] text-slate-400 font-['JetBrains_Mono']">OS Push Hazır</span>
+          </div>
+        )}
 
         {/* Notification Drawer Header */}
         <div className="px-5 py-3 flex items-center justify-between border-b border-white/[0.06] bg-[#0A0E18]">

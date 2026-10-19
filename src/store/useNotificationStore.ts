@@ -77,10 +77,12 @@ interface NotificationState {
   untestedChangesCount: number;
   lastChangeTimestamp: number;
   
-  // Settings
+  // Settings & Native Android Integration
   soundEnabled: boolean;
   dndEnabled: boolean; // Do Not Disturb
   testReminderIntervalMinutes: number;
+  nativePermission: NotificationPermission;
+  isPhoneNotificationSimulated: boolean;
 
   // Actions
   addNotification: (item: Omit<NotificationItem, 'id' | 'timestamp' | 'isRead'> & { id?: string }) => string;
@@ -102,6 +104,8 @@ interface NotificationState {
   
   toggleSound: () => void;
   toggleDnd: () => void;
+  requestNativePermission: () => Promise<boolean>;
+  togglePhoneNotificationSimulation: () => void;
 }
 
 const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
@@ -149,6 +153,8 @@ export const useNotificationStore = create<NotificationState>()(
       soundEnabled: true,
       dndEnabled: false,
       testReminderIntervalMinutes: 3,
+      nativePermission: typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default',
+      isPhoneNotificationSimulated: true,
 
       addNotification: (item) => {
         const id = item.id || `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -169,6 +175,37 @@ export const useNotificationStore = create<NotificationState>()(
             soundEngine.playTestAlert();
           } else {
             soundEngine.playAndroidNotification();
+          }
+        }
+
+        // Trigger native Android OS notification if permission is granted
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted' && !dndEnabled) {
+          try {
+            const nativeNotif = new Notification(newNotif.title, {
+              body: newNotif.message,
+              icon: '/favicon.ico',
+              tag: newNotif.id,
+              silent: !soundEnabled
+            });
+            nativeNotif.onclick = () => {
+              window.focus();
+              if (newNotif.actionType === 'run_qa_test') {
+                get().setQaTestModalOpen(true);
+              } else {
+                get().setDrawerOpen(true);
+              }
+            };
+          } catch {
+            // Native fallback
+          }
+        }
+
+        // Trigger Android mobile haptic vibration
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator && !dndEnabled) {
+          try {
+            navigator.vibrate([100, 50, 100]);
+          } catch {
+            // vibration fallback
           }
         }
 
@@ -312,6 +349,35 @@ export const useNotificationStore = create<NotificationState>()(
       toggleDnd: () => {
         soundEngine.playClick();
         set((state) => ({ dndEnabled: !state.dndEnabled }));
+      },
+
+      requestNativePermission: async () => {
+        if (typeof window === 'undefined' || !('Notification' in window)) {
+          return false;
+        }
+        try {
+          const perm = await Notification.requestPermission();
+          set({ nativePermission: perm });
+          if (perm === 'granted') {
+            soundEngine.playSuccess();
+            get().addNotification({
+              title: '📲 Android Bildirim İzni Aktif',
+              message: 'Kritik kreatif ve QA test bildirimleri doğrudan cihazınızın bildirim çubuğuna aktarılacak.',
+              type: 'system',
+              priority: 'normal',
+              category: 'Cihaz Entegrasyonu'
+            });
+            return true;
+          }
+          return false;
+        } catch {
+          return false;
+        }
+      },
+
+      togglePhoneNotificationSimulation: () => {
+        soundEngine.playClick();
+        set((state) => ({ isPhoneNotificationSimulated: !state.isPhoneNotificationSimulated }));
       }
     }),
     {

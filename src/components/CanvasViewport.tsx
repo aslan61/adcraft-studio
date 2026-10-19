@@ -26,9 +26,11 @@ import {
   Send,
   MoreVertical,
   Disc,
-  Plus
+  Plus,
+  Bell
 } from 'lucide-react';
 import { useAdCraftStore } from '../store/useAdCraftStore';
+import { useNotificationStore } from '../store/useNotificationStore';
 import { AspectRatio, DeviceModel, DeviceColor, HookStyle, CtaTheme, BackgroundPreset } from '../types';
 import { soundEngine } from '../utils/audioEngine';
 import { useTranslation } from '../i18n/translations';
@@ -60,6 +62,12 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ canvasRef }) => 
     activeStoryboard,
     setAutoCropModalOpen
   } = useAdCraftStore();
+
+  const {
+    activeHeadsUp,
+    isPhoneNotificationSimulated,
+    setQaTestModalOpen
+  } = useNotificationStore();
 
   const [safeZonePlatform, setSafeZonePlatform] = useState<'TikTok' | 'Reels' | 'Shorts'>('TikTok');
   const [isDeviceDragging, setIsDeviceDragging] = useState(false);
@@ -1365,6 +1373,35 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ canvasRef }) => 
               {deviceConfig.model === 'MacBook Pro M3' && (
                 <div className="absolute top-1 left-1/2 -translate-x-1/2 w-16 h-3 rounded-b-md bg-black z-40 flex items-center justify-center">
                   <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
+                </div>
+              )}
+
+              {/* In-Phone Screen Simulated Android Push Notification (Hook & QA Alert) */}
+              {isPhoneNotificationSimulated && activeHeadsUp && (
+                <div
+                  onClick={() => {
+                    soundEngine.playClick();
+                    setQaTestModalOpen(true);
+                  }}
+                  className="absolute top-9 inset-x-2.5 z-40 p-2.5 rounded-2xl bg-[#0F1420]/95 border border-white/[0.18] shadow-2xl backdrop-blur-xl animate-in slide-in-from-top-4 duration-300 cursor-pointer hover:border-indigo-400/60 transition-all select-none"
+                >
+                  <div className="flex items-center justify-between text-[9px] text-slate-400 mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3.5 h-3.5 rounded-md bg-indigo-600 flex items-center justify-center text-white">
+                        <Bell className="w-2 h-2" />
+                      </div>
+                      <span className="font-bold text-slate-200">AdCraft Studio</span>
+                      <span>•</span>
+                      <span className="text-indigo-300">Android Push</span>
+                    </div>
+                    <span className="font-['JetBrains_Mono']">Şimdi</span>
+                  </div>
+                  <h5 className="text-[11px] font-bold text-white leading-tight truncate">
+                    {activeHeadsUp.title}
+                  </h5>
+                  <p className="text-[10px] text-slate-300 line-clamp-1 mt-0.5">
+                    {activeHeadsUp.message}
+                  </p>
                 </div>
               )}
 
