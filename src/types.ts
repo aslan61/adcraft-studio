@@ -219,3 +219,12 @@ export interface CreativeVersion {
   state: CreativeSnapshotState;
 }
 
+export interface UndoSnapshot {
+  aspectRatio: AspectRatio;
+  deviceConfig: DeviceConfig;
+  hookCopy: HookCopy;
+  backgroundConfig: BackgroundConfig;
+  audioConfig: AudioTrackConfig;
+  channelRules: ChannelRules;
+  activeAssetId: string;
+}

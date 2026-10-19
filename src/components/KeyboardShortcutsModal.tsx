@@ -14,8 +14,8 @@ import {
   Laptop,
   History,
   Video,
-  Bell,
-  ShieldCheck
+  Undo2,
+  Redo2
 } from 'lucide-react';
 import { soundEngine } from '../utils/audioEngine';
 import { useTranslation } from '../i18n/translations';
@@ -125,6 +125,36 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
 
       // Navigation & Views
       {
+        id: 'undo-action',
+        category: 'navigation',
+        action: {
+          tr: 'Son Değişikliği Geri Al (Undo)',
+          en: 'Undo Last Action'
+        },
+        description: {
+          tr: 'Kanca metni, en-boy oranı, 3D açı veya arkaplan değişikliğini bir adım geri alır',
+          en: 'Revert last creative change, hook edit, aspect ratio, or 3D angle tweak'
+        },
+        macKeys: ['⌘', 'Z'],
+        winKeys: ['Ctrl', 'Z'],
+        icon: Undo2
+      },
+      {
+        id: 'redo-action',
+        category: 'navigation',
+        action: {
+          tr: 'Geri Alınan Değişikliği Yinele (Redo)',
+          en: 'Redo Reverted Action'
+        },
+        description: {
+          tr: 'Geri alınmış kreatif durumunu bir adım ileriye yeniden uygular',
+          en: 'Re-apply previously undone creative modification'
+        },
+        macKeys: ['⌘', '⇧', 'Z'],
+        winKeys: ['Ctrl', 'Y'],
+        icon: Redo2
+      },
+      {
         id: 'search-assets',
         category: 'navigation',
         action: {
@@ -213,36 +243,6 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
         macKeys: ['⌥', 'H'],
         winKeys: ['Alt', 'H'],
         icon: History
-      },
-      {
-        id: 'android-notifications',
-        category: 'navigation',
-        action: {
-          tr: 'Android Bildirim Çekmecesi & Hızlı Ayarlar',
-          en: 'Android Notification Drawer & Quick Settings'
-        },
-        description: {
-          tr: 'Android bildirim panelini, sistem uyarılarını ve hızlı test düğmelerini açar',
-          en: 'Open the Android notification shade, system alerts, and quick QA toggles'
-        },
-        macKeys: ['N'],
-        winKeys: ['N'],
-        icon: Bell
-      },
-      {
-        id: 'creative-qa-test',
-        category: 'navigation',
-        action: {
-          tr: 'Kreatif Güvenlik & QA Test Laboratuvarı',
-          en: 'Creative Safety & QA Test Inspector'
-        },
-        description: {
-          tr: 'TikTok ve Reels güvenli alan, ses senkronizasyonu ve kanca uyumluluk testini başlatır',
-          en: 'Run full pre-flight safe zones, audio sync, and hook compliance test suite'
-        },
-        macKeys: ['T'],
-        winKeys: ['T'],
-        icon: ShieldCheck
       },
 
       // Export & Modals

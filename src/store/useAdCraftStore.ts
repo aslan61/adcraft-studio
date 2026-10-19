@@ -15,7 +15,8 @@ import {
   StoryboardData,
   Language,
   ThemeMode,
-  CreativeVersion
+  CreativeVersion,
+  UndoSnapshot
 } from '../types';
 import {
   saveUserCampaign,
@@ -87,6 +88,14 @@ interface AdCraftState {
   // Version History & Timeline Snapshots
   versions: CreativeVersion[];
   isVersionHistoryModalOpen: boolean;
+
+  // Undo / Redo History
+  undoStack: UndoSnapshot[];
+  redoStack: UndoSnapshot[];
+  undo: () => boolean;
+  redo: () => boolean;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
 
   // Actions
   setTheme: (theme: ThemeMode) => void;
@@ -398,6 +407,16 @@ const initialVersions: CreativeVersion[] = [
   }
 ];
 
+const createUndoSnapshot = (s: AdCraftState): UndoSnapshot => ({
+  aspectRatio: s.aspectRatio,
+  deviceConfig: { ...s.deviceConfig },
+  hookCopy: { ...s.hookCopy },
+  backgroundConfig: { ...s.backgroundConfig },
+  audioConfig: { ...s.audioConfig },
+  channelRules: { ...s.channelRules },
+  activeAssetId: s.activeAssetId
+});
+
 export const useAdCraftStore = create<AdCraftState>()(
   persist(
     (set, get) => ({
@@ -412,6 +431,10 @@ export const useAdCraftStore = create<AdCraftState>()(
       credits: 340,
       autoSyncEnabled: true,
       assetId: '#NR-8941',
+
+      // Undo / Redo stacks
+      undoStack: [],
+      redoStack: [],
 
       assets: initialAssets,
       activeAssetId: 'nr-01',
@@ -668,15 +691,108 @@ export const useAdCraftStore = create<AdCraftState>()(
             activeAssetId: s.activeAssetId === id ? (remainingAssets[0]?.id || '') : s.activeAssetId
           };
         }),
-      setActiveAssetId: (id) => set({ activeAssetId: id }),
+      setActiveAssetId: (id) => {
+        const s = get();
+        if (s.activeAssetId === id) return;
+        const snap = createUndoSnapshot(s);
+        set((prev) => ({
+          activeAssetId: id,
+          undoStack: [snap, ...prev.undoStack].slice(0, 30),
+          redoStack: []
+        }));
+      },
       setSelectedFilter: (filter) => set({ selectedFilter: filter }),
       toggleAutoVisionClassifier: () => set((s) => ({ autoVisionClassifier: !s.autoVisionClassifier })),
 
-      setAspectRatio: (ratio) => set({ aspectRatio: ratio }),
-      setDeviceModel: (model) => set((s) => ({ deviceConfig: { ...s.deviceConfig, model } })),
-      setDeviceColor: (color) => set((s) => ({ deviceConfig: { ...s.deviceConfig, color } })),
-      setDeviceAngles: (angles) => set((s) => ({ deviceConfig: { ...s.deviceConfig, ...angles } })),
+      // Undo / Redo Actions
+      undo: () => {
+        const s = get();
+        if (s.undoStack.length === 0) return false;
+        const [previous, ...restUndo] = s.undoStack;
+        const currentSnap = createUndoSnapshot(s);
+
+        set({
+          aspectRatio: previous.aspectRatio,
+          deviceConfig: { ...previous.deviceConfig },
+          hookCopy: { ...previous.hookCopy },
+          backgroundConfig: { ...previous.backgroundConfig },
+          audioConfig: { ...previous.audioConfig },
+          channelRules: { ...previous.channelRules },
+          activeAssetId: previous.activeAssetId,
+          undoStack: restUndo,
+          redoStack: [currentSnap, ...s.redoStack].slice(0, 30)
+        });
+        return true;
+      },
+
+      redo: () => {
+        const s = get();
+        if (s.redoStack.length === 0) return false;
+        const [next, ...restRedo] = s.redoStack;
+        const currentSnap = createUndoSnapshot(s);
+
+        set({
+          aspectRatio: next.aspectRatio,
+          deviceConfig: { ...next.deviceConfig },
+          hookCopy: { ...next.hookCopy },
+          backgroundConfig: { ...next.backgroundConfig },
+          audioConfig: { ...next.audioConfig },
+          channelRules: { ...next.channelRules },
+          activeAssetId: next.activeAssetId,
+          undoStack: [currentSnap, ...s.undoStack].slice(0, 30),
+          redoStack: restRedo
+        });
+        return true;
+      },
+
+      canUndo: () => get().undoStack.length > 0,
+      canRedo: () => get().redoStack.length > 0,
+
+      setAspectRatio: (ratio) => {
+        const s = get();
+        if (s.aspectRatio === ratio) return;
+        const snap = createUndoSnapshot(s);
+        set((prev) => ({
+          aspectRatio: ratio,
+          undoStack: [snap, ...prev.undoStack].slice(0, 30),
+          redoStack: []
+        }));
+      },
+
+      setDeviceModel: (model) => {
+        const s = get();
+        if (s.deviceConfig.model === model) return;
+        const snap = createUndoSnapshot(s);
+        set((prev) => ({
+          deviceConfig: { ...prev.deviceConfig, model },
+          undoStack: [snap, ...prev.undoStack].slice(0, 30),
+          redoStack: []
+        }));
+      },
+
+      setDeviceColor: (color) => {
+        const s = get();
+        if (s.deviceConfig.color === color) return;
+        const snap = createUndoSnapshot(s);
+        set((prev) => ({
+          deviceConfig: { ...prev.deviceConfig, color },
+          undoStack: [snap, ...prev.undoStack].slice(0, 30),
+          redoStack: []
+        }));
+      },
+
+      setDeviceAngles: (angles) => {
+        const s = get();
+        const snap = createUndoSnapshot(s);
+        set((prev) => ({
+          deviceConfig: { ...prev.deviceConfig, ...angles },
+          undoStack: [snap, ...prev.undoStack].slice(0, 30),
+          redoStack: []
+        }));
+      },
+
       setMotionPreset: (preset) => {
+        const s = get();
         let yaw = 0;
         let pitch = 0;
         if (preset === 'Floating Drift') {
@@ -689,21 +805,72 @@ export const useAdCraftStore = create<AdCraftState>()(
           yaw = 4;
           pitch = -1;
         }
-        set((s) => ({ deviceConfig: { ...s.deviceConfig, motionPreset: preset, yaw, pitch } }));
+        const snap = createUndoSnapshot(s);
+        set((prev) => ({
+          deviceConfig: { ...prev.deviceConfig, motionPreset: preset, yaw, pitch },
+          undoStack: [snap, ...prev.undoStack].slice(0, 30),
+          redoStack: []
+        }));
       },
+
       toggleSafeZones: () => set((s) => ({ showSafeZones: !s.showSafeZones })),
       setCanvasZoom: (zoom) =>
         set((s) => ({
           canvasZoom: typeof zoom === 'function' ? Math.max(50, Math.min(200, zoom(s.canvasZoom))) : zoom
         })),
 
-      setHookCopy: (copy) => set((s) => ({ hookCopy: { ...s.hookCopy, ...copy } })),
-      setToneArchetype: (toneArchetype) => set((s) => ({ hookCopy: { ...s.hookCopy, toneArchetype } })),
-      setBackgroundPreset: (preset) => set((s) => ({ backgroundConfig: { ...s.backgroundConfig, preset } })),
-      setBackgroundConfig: (config) => set((s) => ({ backgroundConfig: { ...s.backgroundConfig, ...config } })),
+      setHookCopy: (copy) => {
+        const s = get();
+        const snap = createUndoSnapshot(s);
+        set((prev) => ({
+          hookCopy: { ...prev.hookCopy, ...copy },
+          undoStack: [snap, ...prev.undoStack].slice(0, 30),
+          redoStack: []
+        }));
+      },
+
+      setToneArchetype: (toneArchetype) => {
+        const s = get();
+        if (s.hookCopy.toneArchetype === toneArchetype) return;
+        const snap = createUndoSnapshot(s);
+        set((prev) => ({
+          hookCopy: { ...prev.hookCopy, toneArchetype },
+          undoStack: [snap, ...prev.undoStack].slice(0, 30),
+          redoStack: []
+        }));
+      },
+
+      setBackgroundPreset: (preset) => {
+        const s = get();
+        if (s.backgroundConfig.preset === preset) return;
+        const snap = createUndoSnapshot(s);
+        set((prev) => ({
+          backgroundConfig: { ...prev.backgroundConfig, preset },
+          undoStack: [snap, ...prev.undoStack].slice(0, 30),
+          redoStack: []
+        }));
+      },
+
+      setBackgroundConfig: (config) => {
+        const s = get();
+        const snap = createUndoSnapshot(s);
+        set((prev) => ({
+          backgroundConfig: { ...prev.backgroundConfig, ...config },
+          undoStack: [snap, ...prev.undoStack].slice(0, 30),
+          redoStack: []
+        }));
+      },
+
       setAudioConfig: (config) => set((s) => ({ audioConfig: { ...s.audioConfig, ...config } })),
-      toggleChannelRule: (key) =>
-        set((s) => ({ channelRules: { ...s.channelRules, [key]: !s.channelRules[key] } })),
+      toggleChannelRule: (key) => {
+        const s = get();
+        const snap = createUndoSnapshot(s);
+        set((prev) => ({
+          channelRules: { ...prev.channelRules, [key]: !prev.channelRules[key] },
+          undoStack: [snap, ...prev.undoStack].slice(0, 30),
+          redoStack: []
+        }));
+      },
 
       setCurrentTime: (time) => set({ timeline: { ...get().timeline, currentTime: time } }),
       setIsPlaying: (isPlaying) => set({ timeline: { ...get().timeline, isPlaying } }),

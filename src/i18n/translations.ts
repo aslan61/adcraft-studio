@@ -24,6 +24,8 @@ export const translations = {
       turkish: 'Türkçe',
       english: 'English',
       switchLanguage: 'Dili Değiştir',
+      undo: 'Geri Al',
+      redo: 'Yinele',
     },
     header: {
       campaignProjects: 'Kampanya Projeleri',
@@ -521,6 +523,8 @@ export const translations = {
       turkish: 'Türkçe',
       english: 'English',
       switchLanguage: 'Switch Language',
+      undo: 'Undo',
+      redo: 'Redo',
     },
     header: {
       campaignProjects: 'Campaign Projects',

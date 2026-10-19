@@ -48,9 +48,10 @@ export default function App() {
     setVersionHistoryModalOpen,
     hookCopy,
     aspectRatio,
-    showSafeZones
+    showSafeZones,
+    undo,
+    redo
   } = useAdCraftStore();
-
   const {
     initializeAuth,
     profile,
@@ -59,7 +60,6 @@ export default function App() {
     setAccountModalOpen,
     setRewardedAdModalOpen
   } = useAuthStore();
-
   const {
     setDrawerOpen,
     toggleDrawer,
@@ -69,7 +69,6 @@ export default function App() {
     untestedChangesCount,
     recordUntestedChange
   } = useNotificationStore();
-
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Sync document root class with selected theme
@@ -203,6 +202,25 @@ export default function App() {
         return;
       }
 
+      // Cmd+Z or Ctrl+Z (without Shift): Undo
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+        e.preventDefault();
+        soundEngine.playWhoosh();
+        undo();
+        return;
+      }
+
+      // Cmd+Shift+Z or Ctrl+Y: Redo
+      if (
+        ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z') && e.shiftKey) ||
+        ((e.metaKey || e.ctrlKey) && (e.key === 'y' || e.key === 'Y'))
+      ) {
+        e.preventDefault();
+        soundEngine.playWhoosh();
+        redo();
+        return;
+      }
+
       if (isInput) return;
 
       // Spacebar: Play/Pause timeline
@@ -278,7 +296,9 @@ export default function App() {
     setRewardedAdModalOpen,
     setDrawerOpen,
     toggleDrawer,
-    setQaTestModalOpen
+    setQaTestModalOpen,
+    undo,
+    redo
   ]);
 
   return (

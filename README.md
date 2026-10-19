@@ -15,6 +15,11 @@
 
 ## 🚀 Key Features
 
+* **↩️ Creative Undo / Redo History Engine:**
+  * Instantaneous multi-step state history stack (`Ctrl+Z` / `⌘Z` for Undo, `Ctrl+Y` / `⌘Shift+Z` for Redo).
+  * Tracks hook copy, aspect ratio, 3D yaw/pitch/roll angles, chassis styling, background presets, and audio track configs.
+  * Direct one-click Undo/Redo toolbar buttons in the top studio header with real-time disabled states and sound cues.
+
 * **🔔 Android 14/15 System Notification & Creative QA Engine:**
   * **Automated Pre-Flight Test Reminders:** Monitors creative edits and alerts when ad creatives have not been tested for TikTok/Reels safe zones, audio sync, or CTA visibility.
   * **Material You Heads-Up Banners:** Top floating interactive notification toasts with quick action triggers and Android audio chimes.

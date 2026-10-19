@@ -21,11 +21,12 @@ import {
   History,
   Globe,
   Sun,
-  Moon
+  Moon,
+  Undo2,
+  Redo2
 } from 'lucide-react';
 import { useAdCraftStore } from '../store/useAdCraftStore';
 import { useAuthStore } from '../store/useAuthStore';
-import { useNotificationStore } from '../store/useNotificationStore';
 import { soundEngine } from '../utils/audioEngine';
 import { useTranslation } from '../i18n/translations';
 
@@ -56,7 +57,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
     deleteCampaignFromCloud,
     loadProject,
     versions,
-    setVersionHistoryModalOpen
+    setVersionHistoryModalOpen,
+    undo,
+    redo,
+    canUndo,
+    canRedo
   } = useAdCraftStore();
 
   const {
@@ -71,16 +76,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
 
   const activeCredits = profile?.credits ?? credits;
 
-  const {
-    notifications,
-    toggleDrawer,
-    setQaTestModalOpen,
-    latestQaReport,
-    lastTestedAt
-  } = useNotificationStore();
-
-  const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length;
-
+  const [showNotification, setShowNotification] = useState(false);
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -375,6 +371,42 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
             )}
           </div>
 
+          {/* Undo / Redo Actions Group */}
+          <div className="flex items-center gap-0.5 bg-[#0F131D] border border-white/[0.08] p-0.5 rounded-xl shadow-inner shrink-0">
+            <button
+              id="header-undo-btn"
+              onClick={() => {
+                soundEngine.playWhoosh();
+                undo();
+              }}
+              disabled={!canUndo()}
+              className={`p-1.5 rounded-lg text-xs transition-all cursor-pointer ${
+                canUndo()
+                  ? 'text-slate-200 hover:text-white hover:bg-white/[0.08] active:scale-95'
+                  : 'text-slate-600 opacity-40 cursor-not-allowed'
+              }`}
+              title={language === 'tr' ? 'Geri Al (Ctrl+Z / ⌘Z)' : 'Undo (Ctrl+Z / ⌘Z)'}
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              id="header-redo-btn"
+              onClick={() => {
+                soundEngine.playWhoosh();
+                redo();
+              }}
+              disabled={!canRedo()}
+              className={`p-1.5 rounded-lg text-xs transition-all cursor-pointer ${
+                canRedo()
+                  ? 'text-slate-200 hover:text-white hover:bg-white/[0.08] active:scale-95'
+                  : 'text-slate-600 opacity-40 cursor-not-allowed'
+              }`}
+              title={language === 'tr' ? 'Yinele (Ctrl+Y / ⌘Shift+Z)' : 'Redo (Ctrl+Y / ⌘Shift+Z)'}
+            >
+              <Redo2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
           <div className="relative flex items-center">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0F131D]/90 border border-white/[0.08] text-slate-400 w-28 sm:w-36 md:w-40 lg:w-48 xl:w-56 focus-within:w-64 hover:border-white/20 focus-within:border-indigo-500/80 focus-within:ring-1 focus-within:ring-indigo-500/30 transition-all shadow-inner">
               <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -612,56 +644,46 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
             <Keyboard className="w-4 h-4 shrink-0" />
           </button>
 
-          {/* Creative QA Status Pill */}
-          <button
-            onClick={() => {
-              soundEngine.playClick();
-              setQaTestModalOpen(true);
-            }}
-            className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold font-['JetBrains_Mono'] transition-all cursor-pointer shrink-0 ${
-              !lastTestedAt
-                ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 hover:bg-amber-500/25 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
-                : latestQaReport && latestQaReport.failedCount > 0
-                ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 hover:bg-rose-500/25'
-                : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25'
-            }`}
-            title={
-              !lastTestedAt
-                ? 'Kreatif QA Testi Henüz Yapılmadı! Tıklayarak başlatın.'
-                : `Kreatif QA Skoru: ${latestQaReport?.overallScore ?? 100}/100`
-            }
-          >
-            {!lastTestedAt ? (
-              <>
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                <span>QA Testi Yapılmadı</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>QA: {latestQaReport?.overallScore ?? 100}/100</span>
-              </>
-            )}
-          </button>
-
-          {/* Android Notification Drawer Trigger (Bell) */}
+          {/* Notifications */}
           <div className="relative shrink-0">
             <button
-              id="android-notification-bell-btn"
-              onClick={() => {
-                soundEngine.playClick();
-                toggleDrawer();
-              }}
+              onClick={() => setShowNotification(!showNotification)}
               className="relative p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer shrink-0"
-              title="Android Bildirim Çekmecesi & Hızlı Ayarlar"
             >
               <Bell className="w-4 h-4 shrink-0" />
-              {unreadNotificationsCount > 0 && (
-                <span className="absolute top-1 right-1 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold ring-2 ring-[#0B0E15]">
-                  {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
-                </span>
-              )}
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0B0E15]" />
             </button>
+
+            {showNotification && (
+              <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-[#0A0D15]/95 border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.08)] backdrop-blur-2xl p-3.5 z-50 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                  <span className="text-xs font-semibold text-white">{t.header.notifications}</span>
+                  <button onClick={() => setShowNotification(false)} className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="py-2 flex flex-col gap-2">
+                  <div className="p-2.5 rounded-xl bg-[#0D111C]/80 border border-white/[0.06] flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium text-white">{t.header.adPackFinished}</span>
+                      <span className="text-[11px] text-slate-400">
+                        {t.header.adPackFinishedDesc}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-[#0D111C]/80 border border-white/[0.06] flex items-start gap-2.5">
+                    <Zap className="w-4 h-4 text-cyan-400 mt-0.5 shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium text-white">{t.header.gpuNodeBoost}</span>
+                      <span className="text-[11px] text-slate-400">
+                        {t.header.gpuNodeBoostDesc}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* User Profile / Auth Button */}
