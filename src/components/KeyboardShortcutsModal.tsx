@@ -262,6 +262,21 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
         icon: Sparkles
       },
       {
+        id: 'screen-record',
+        category: 'export',
+        action: {
+          tr: 'Doğrudan Oynanış / Ekran Kaydı',
+          en: 'In-Browser Screen & Gameplay Recording'
+        },
+        description: {
+          tr: 'Tarayıcı sekmesini veya oyun ekranını harici yazılım olmadan 60 FPS kaydeder ve kütüphaneye ekler',
+          en: 'Directly capture browser tab or game window in 60 FPS without external tools'
+        },
+        macKeys: ['Asset', 'Rec'],
+        winKeys: ['Varlık', 'Kaydet'],
+        icon: Video
+      },
+      {
         id: 'close-modal',
         category: 'export',
         action: {

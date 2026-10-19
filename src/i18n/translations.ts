@@ -198,6 +198,9 @@ export const translations = {
     assetLibrary: {
       title: 'Medya Kütüphanesi & Oyun Kesitleri',
       upload: 'Varlık Yükle',
+      recordScreen: 'Ekran / Oyun Kaydet',
+      stopRecord: 'Durdur & Ekle',
+      recording: 'Kayıt Yapılıyor...',
       uploadHint: 'Video (MP4/WebM) veya Görsel (PNG/JPG) sürükleyin',
       visionClassifier: 'Yapay Zeka Otomatik Sınıflandırma',
       extractedFrames: 'Çıkarılan Kanca Kareleri (Yüksek TO)',
@@ -697,6 +700,9 @@ export const translations = {
     assetLibrary: {
       title: 'Media Library & Gameplay Cuts',
       upload: 'Upload Asset',
+      recordScreen: 'Record Screen / Gameplay',
+      stopRecord: 'Stop & Add',
+      recording: 'Recording...',
       uploadHint: 'Drop Video (MP4/WebM) or Image (PNG/JPG)',
       visionClassifier: 'AI Auto-Classifier',
       extractedFrames: 'AI Extracted Hook Keyframes (High CTR)',

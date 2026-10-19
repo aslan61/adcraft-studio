@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   FolderArchive,
   UploadCloud,
@@ -13,7 +13,9 @@ import {
   Flame,
   Crop,
   Sparkles,
-  Trash2
+  Trash2,
+  Square,
+  Video
 } from 'lucide-react';
 import { useAdCraftStore } from '../store/useAdCraftStore';
 import { MediaAsset } from '../types';
@@ -45,6 +47,186 @@ export const AssetLibrary: React.FC = () => {
   const [isSyncingStore, setIsSyncingStore] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isExtractingFrames, setIsExtractingFrames] = useState(false);
+
+  // In-Browser Screen & Gameplay Recorder
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+  const screenStreamRef = useRef<MediaStream | null>(null);
+  const recordingTimerRef = useRef<number | null>(null);
+  const [isRecordingScreen, setIsRecordingScreen] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) {
+        window.clearInterval(recordingTimerRef.current);
+      }
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
+  const formatRecTime = (sec: number) => {
+    const mins = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${mins < 10 ? '0' : ''}${mins}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  const handleStartScreenRecording = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+      alert(language === 'tr' ? 'Tarayıcınız ekran kaydı API desteği sunmuyor.' : 'Your browser does not support getDisplayMedia.');
+      return;
+    }
+
+    try {
+      soundEngine.playClick();
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          frameRate: 60,
+          displaySurface: 'browser'
+        } as any,
+        audio: true
+      });
+
+      screenStreamRef.current = stream;
+      recordedChunksRef.current = [];
+
+      const mimeTypes = [
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm',
+        'video/mp4'
+      ];
+      const selectedMime = mimeTypes.find((m) => MediaRecorder.isTypeSupported(m)) || 'video/webm';
+
+      const recorder = new MediaRecorder(stream, {
+        mimeType: selectedMime,
+        videoBitsPerSecond: 10000000
+      });
+
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          recordedChunksRef.current.push(e.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        if (recordingTimerRef.current) {
+          window.clearInterval(recordingTimerRef.current);
+          recordingTimerRef.current = null;
+        }
+
+        const chunks = recordedChunksRef.current;
+        if (chunks.length === 0) {
+          setIsRecordingScreen(false);
+          return;
+        }
+
+        const videoBlob = new Blob(chunks, { type: selectedMime });
+        const videoUrl = URL.createObjectURL(videoBlob);
+        setIsExtractingFrames(true);
+
+        try {
+          const videoMeta = await new Promise<{ w: number; h: number; dur: number }>((res) => {
+            const v = document.createElement('video');
+            v.src = videoUrl;
+            v.onloadedmetadata = () => {
+              res({
+                w: v.videoWidth || 1080,
+                h: v.videoHeight || 1920,
+                dur: Math.round(v.duration || recordingSeconds || 5)
+              });
+            };
+            v.onerror = () => res({ w: 1080, h: 1920, dur: recordingSeconds || 5 });
+          });
+
+          const ratio = videoMeta.w / videoMeta.h;
+          const resolvedAspect = ratio > 1.3 ? '16:9' : ratio > 0.8 ? '1:1' : ratio > 0.6 ? '2:3' : '9:16';
+          const durationStr = `00:${videoMeta.dur < 10 ? '0' : ''}${videoMeta.dur}`;
+
+          const extracted = await extractVideoFrames(videoUrl, 3);
+
+          const now = new Date();
+          const timestamp = `${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+
+          const newAsset: MediaAsset = {
+            id: `screen-rec-${Date.now()}`,
+            name: `Gameplay_Rec_${timestamp}.webm`,
+            type: 'video',
+            url: videoUrl,
+            thumbnailUrl: extracted[0] || videoUrl,
+            duration: durationStr,
+            resolution: `${videoMeta.w}x${videoMeta.h}`,
+            fps: '60fps Screen Record',
+            tag: 'Gameplay',
+            aspectRatio: resolvedAspect,
+            inUseHook: 'Screen & Gameplay Rec',
+            sizeBytes: videoBlob.size,
+            extractedFrames: extracted
+          };
+
+          addAsset(newAsset);
+          setActiveAssetId(newAsset.id);
+          soundEngine.playSuccess();
+        } catch (err) {
+          console.warn('Error processing screen record:', err);
+        } finally {
+          setIsExtractingFrames(false);
+          setIsRecordingScreen(false);
+          setRecordingSeconds(0);
+        }
+      };
+
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.onended = () => {
+          if (recorder.state !== 'inactive') {
+            recorder.stop();
+          }
+        };
+      }
+
+      mediaRecorderRef.current = recorder;
+      recorder.start(1000);
+      setIsRecordingScreen(true);
+      setRecordingSeconds(0);
+
+      recordingTimerRef.current = window.setInterval(() => {
+        setRecordingSeconds((prev) => prev + 1);
+      }, 1000);
+    } catch (e: any) {
+      if (e.name !== 'AbortError' && e.name !== 'NotAllowedError') {
+        console.error('Screen recording failed:', e);
+      }
+      setIsRecordingScreen(false);
+    }
+  };
+
+  const handleStopScreenRecording = () => {
+    soundEngine.playClick();
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach((track) => track.stop());
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  const handleCancelScreenRecording = () => {
+    soundEngine.playClick();
+    if (recordingTimerRef.current) {
+      window.clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach((track) => track.stop());
+    }
+    recordedChunksRef.current = [];
+    setIsRecordingScreen(false);
+    setRecordingSeconds(0);
+  };
 
   // Filtered Assets by Category Tag and Global Search Query
   const filteredAssets = assets.filter((asset) => {
@@ -231,13 +413,43 @@ export const AssetLibrary: React.FC = () => {
           </span>
         </div>
 
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="px-3 py-1.5 rounded-xl studio-btn-primary text-white text-xs font-semibold transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
-        >
-          <UploadCloud className="w-3.5 h-3.5" />
-          <span>{language === 'tr' ? 'Yükle' : 'Upload'}</span>
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={isRecordingScreen ? handleStopScreenRecording : handleStartScreenRecording}
+            className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer ${
+              isRecordingScreen
+                ? 'bg-rose-600 hover:bg-rose-500 text-white animate-pulse shadow-lg shadow-rose-900/40'
+                : 'bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30'
+            }`}
+            title={
+              isRecordingScreen
+                ? (language === 'tr' ? 'Kaydı Durdur ve Ekle' : 'Stop Recording & Add')
+                : (language === 'tr' ? 'Sekme / Ekran Oynanış Kaydı Başlat' : 'Start Screen / Gameplay Recording')
+            }
+          >
+            {isRecordingScreen ? (
+              <>
+                <Square className="w-3 h-3 fill-current" />
+                <span className="font-['JetBrains_Mono']">{formatRecTime(recordingSeconds)}</span>
+              </>
+            ) : (
+              <>
+                <Video className="w-3.5 h-3.5 text-rose-400" />
+                <span>{language === 'tr' ? 'Kaydet' : 'Record'}</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="px-3 py-1.5 rounded-xl studio-btn-primary text-white text-xs font-semibold transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+          >
+            <UploadCloud className="w-3.5 h-3.5" />
+            <span>{language === 'tr' ? 'Yükle' : 'Upload'}</span>
+          </button>
+        </div>
 
         <input
           ref={fileInputRef}
@@ -248,6 +460,48 @@ export const AssetLibrary: React.FC = () => {
           onChange={(e) => handleFiles(e.target.files)}
         />
       </div>
+
+      {/* Live Screen & Gameplay Recording Active Banner */}
+      {isRecordingScreen && (
+        <div className="p-3 rounded-2xl bg-gradient-to-r from-rose-950/80 via-slate-900/90 to-rose-950/80 border border-rose-500/50 shadow-xl flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+            </span>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-white font-['JetBrains_Mono'] tracking-wider">
+                  REC
+                </span>
+                <span className="text-xs font-semibold text-rose-300 font-['JetBrains_Mono']">
+                  {formatRecTime(recordingSeconds)}
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-300">
+                {language === 'tr' ? 'Oynanış veya sekme kaydediliyor (60 FPS)' : 'Capturing gameplay tab (60 FPS)'}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleCancelScreenRecording}
+              className="px-2 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-xs transition-colors cursor-pointer"
+            >
+              {language === 'tr' ? 'İptal' : 'Cancel'}
+            </button>
+            <button
+              type="button"
+              onClick={handleStopScreenRecording}
+              className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-1"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>{language === 'tr' ? 'Durdur' : 'Stop'}</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Store Sync Pipeline */}
       <div className="flex flex-col gap-1.5 font-['Geist']">
