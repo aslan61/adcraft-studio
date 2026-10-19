@@ -190,7 +190,7 @@ app.get('/api/health', (req, res) => {
 
   res.json({
     status: 'ok',
-    version: '1.2.1',
+    version: '1.3.0',
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime()),
     geminiKeyConfigured: !!(effectiveKey && effectiveKey.trim()),
@@ -210,7 +210,7 @@ app.get('/api/engine/status', (req, res) => {
   const hasKey = !!(clientKey || process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY);
   res.json({
     success: true,
-    version: '1.2.1',
+    version: '1.3.0',
     engine: 'AdCraft Creative Synthesizer AI v3.4',
     gpuWorkerCluster: 'NVIDIA A100-SXM4-80GB (WebGPU Accelerated)',
     primaryModel: 'gemini-2.5-flash',

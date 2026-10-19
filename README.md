@@ -1,4 +1,4 @@
-# 🎬 AdCraft Studio (v1.2.1)
+# 🎬 AdCraft Studio (v1.3.0)
 ### AI-Powered High-Converting Video Ad & Creative Production Studio
 
 > **Live Web App:** [https://aslan61.github.io/adcraft-studio/](https://aslan61.github.io/adcraft-studio/)
@@ -14,6 +14,12 @@
 ---
 
 ## 🚀 Key Features
+
+* **🔔 Android 14/15 System Notification & Creative QA Engine:**
+  * **Automated Pre-Flight Test Reminders:** Monitors creative edits and alerts when ad creatives have not been tested for TikTok/Reels safe zones, audio sync, or CTA visibility.
+  * **Material You Heads-Up Banners:** Top floating interactive notification toasts with quick action triggers and Android audio chimes.
+  * **Android Notification Drawer & Quick Settings Shade:** Real-time system status bar, Wi-Fi/5G/Battery indicators, DND mode, QA test tiles, and notification history.
+  * **6-Point Creative QA Test Laboratory:** Evaluates Safe Zones compliance, Audio Mute/Volume levels, Hook Scroll-Stopping Duration (≤ 3.0s), CTA Button Contrast, and Resolution.
 
 * **📱 3D Interactive Device Frame Engine:**
   * Real-time hardware chassis simulation for **iPhone 16 Pro**, **Pixel 9 Pro**, **iPad Pro M4**, **MacBook Pro M3**, and **Minimalist Frame**.

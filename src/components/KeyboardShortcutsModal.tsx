@@ -13,7 +13,9 @@ import {
   ExternalLink,
   Laptop,
   History,
-  Video
+  Video,
+  Bell,
+  ShieldCheck
 } from 'lucide-react';
 import { soundEngine } from '../utils/audioEngine';
 import { useTranslation } from '../i18n/translations';
@@ -211,6 +213,36 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
         macKeys: ['⌥', 'H'],
         winKeys: ['Alt', 'H'],
         icon: History
+      },
+      {
+        id: 'android-notifications',
+        category: 'navigation',
+        action: {
+          tr: 'Android Bildirim Çekmecesi & Hızlı Ayarlar',
+          en: 'Android Notification Drawer & Quick Settings'
+        },
+        description: {
+          tr: 'Android bildirim panelini, sistem uyarılarını ve hızlı test düğmelerini açar',
+          en: 'Open the Android notification shade, system alerts, and quick QA toggles'
+        },
+        macKeys: ['N'],
+        winKeys: ['N'],
+        icon: Bell
+      },
+      {
+        id: 'creative-qa-test',
+        category: 'navigation',
+        action: {
+          tr: 'Kreatif Güvenlik & QA Test Laboratuvarı',
+          en: 'Creative Safety & QA Test Inspector'
+        },
+        description: {
+          tr: 'TikTok ve Reels güvenli alan, ses senkronizasyonu ve kanca uyumluluk testini başlatır',
+          en: 'Run full pre-flight safe zones, audio sync, and hook compliance test suite'
+        },
+        macKeys: ['T'],
+        winKeys: ['T'],
+        icon: ShieldCheck
       },
 
       // Export & Modals

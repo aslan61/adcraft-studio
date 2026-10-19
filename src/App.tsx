@@ -26,8 +26,12 @@ import { RewardedAdModal } from './components/RewardedAdModal';
 import { AutoCropModal } from './components/AutoCropModal';
 import { VoiceoverStudioModal } from './components/VoiceoverStudioModal';
 import { VersionHistoryModal } from './components/VersionHistoryModal';
+import { AndroidHeadsUpBanner } from './components/AndroidHeadsUpBanner';
+import { AndroidNotificationDrawer } from './components/AndroidNotificationDrawer';
+import { CreativeQaTestModal } from './components/CreativeQaTestModal';
 import { useAdCraftStore } from './store/useAdCraftStore';
 import { useAuthStore } from './store/useAuthStore';
+import { useNotificationStore } from './store/useNotificationStore';
 import { soundEngine } from './utils/audioEngine';
 
 export default function App() {
@@ -41,8 +45,12 @@ export default function App() {
     setCredits,
     setAutoCropModalOpen,
     setVoiceoverModalOpen,
-    setVersionHistoryModalOpen
+    setVersionHistoryModalOpen,
+    hookCopy,
+    aspectRatio,
+    showSafeZones
   } = useAdCraftStore();
+
   const {
     initializeAuth,
     profile,
@@ -51,6 +59,17 @@ export default function App() {
     setAccountModalOpen,
     setRewardedAdModalOpen
   } = useAuthStore();
+
+  const {
+    setDrawerOpen,
+    toggleDrawer,
+    setQaTestModalOpen,
+    triggerTestReminder,
+    lastTestedAt,
+    untestedChangesCount,
+    recordUntestedChange
+  } = useNotificationStore();
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Sync document root class with selected theme
@@ -63,6 +82,38 @@ export default function App() {
       document.documentElement.classList.add('dark');
     }
   }, [theme]);
+
+  // Track creative changes to mark project as needing QA tests
+  const initialRenderRef = useRef(true);
+  useEffect(() => {
+    if (initialRenderRef.current) {
+      initialRenderRef.current = false;
+      return;
+    }
+    recordUntestedChange();
+  }, [hookCopy, aspectRatio, audioConfig, showSafeZones, recordUntestedChange]);
+
+  // Automated Test Reminder Engine: If project has untested changes, periodically reminds with Android notification
+  useEffect(() => {
+    // Initial session reminder after 30s if test never run
+    const initialTimer = setTimeout(() => {
+      if (!lastTestedAt) {
+        triggerTestReminder('Yayın öncesi TikTok ve Reels standartları henüz test edilmedi.');
+      }
+    }, 30000);
+
+    // Periodic reminder check every 3 minutes
+    const intervalTimer = setInterval(() => {
+      if (!lastTestedAt || untestedChangesCount >= 2) {
+        triggerTestReminder('Kreatifte yeni değişiklikler yapıldı fakat test çalıştırılmadı.');
+      }
+    }, 180000);
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(intervalTimer);
+    };
+  }, [lastTestedAt, untestedChangesCount, triggerTestReminder]);
 
   // Initialize Firebase Auth listener on startup
   useEffect(() => {
@@ -109,6 +160,8 @@ export default function App() {
         setPricingModalOpen(false);
         setAccountModalOpen(false);
         setRewardedAdModalOpen(false);
+        setDrawerOpen(false);
+        setQaTestModalOpen(false);
         return;
       }
 
@@ -195,6 +248,18 @@ export default function App() {
         soundEngine.playClick();
         setActiveView('variations');
       }
+
+      // N key: Toggle Android Notification Shade
+      if (e.key === 'n' || e.key === 'N') {
+        soundEngine.playClick();
+        toggleDrawer();
+      }
+
+      // T key: Open Creative QA Test Modal
+      if (e.key === 't' || e.key === 'T') {
+        soundEngine.playClick();
+        setQaTestModalOpen(true);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -210,7 +275,10 @@ export default function App() {
     setAuthModalOpen,
     setPricingModalOpen,
     setAccountModalOpen,
-    setRewardedAdModalOpen
+    setRewardedAdModalOpen,
+    setDrawerOpen,
+    toggleDrawer,
+    setQaTestModalOpen
   ]);
 
   return (
@@ -311,6 +379,11 @@ export default function App() {
       <AutoCropModal />
       <VoiceoverStudioModal />
       <VersionHistoryModal />
+
+      {/* Android System UI Notification System & Creative QA Modal */}
+      <AndroidHeadsUpBanner onRunTest={() => setQaTestModalOpen(true)} />
+      <AndroidNotificationDrawer onRunTest={() => setQaTestModalOpen(true)} />
+      <CreativeQaTestModal />
     </div>
   );
 }

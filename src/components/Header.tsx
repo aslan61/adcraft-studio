@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useAdCraftStore } from '../store/useAdCraftStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { useNotificationStore } from '../store/useNotificationStore';
 import { soundEngine } from '../utils/audioEngine';
 import { useTranslation } from '../i18n/translations';
 
@@ -70,7 +71,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
 
   const activeCredits = profile?.credits ?? credits;
 
-  const [showNotification, setShowNotification] = useState(false);
+  const {
+    notifications,
+    toggleDrawer,
+    setQaTestModalOpen,
+    latestQaReport,
+    lastTestedAt
+  } = useNotificationStore();
+
+  const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length;
+
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -602,46 +612,56 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
             <Keyboard className="w-4 h-4 shrink-0" />
           </button>
 
-          {/* Notifications */}
+          {/* Creative QA Status Pill */}
+          <button
+            onClick={() => {
+              soundEngine.playClick();
+              setQaTestModalOpen(true);
+            }}
+            className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold font-['JetBrains_Mono'] transition-all cursor-pointer shrink-0 ${
+              !lastTestedAt
+                ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 hover:bg-amber-500/25 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
+                : latestQaReport && latestQaReport.failedCount > 0
+                ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 hover:bg-rose-500/25'
+                : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25'
+            }`}
+            title={
+              !lastTestedAt
+                ? 'Kreatif QA Testi Henüz Yapılmadı! Tıklayarak başlatın.'
+                : `Kreatif QA Skoru: ${latestQaReport?.overallScore ?? 100}/100`
+            }
+          >
+            {!lastTestedAt ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                <span>QA Testi Yapılmadı</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>QA: {latestQaReport?.overallScore ?? 100}/100</span>
+              </>
+            )}
+          </button>
+
+          {/* Android Notification Drawer Trigger (Bell) */}
           <div className="relative shrink-0">
             <button
-              onClick={() => setShowNotification(!showNotification)}
+              id="android-notification-bell-btn"
+              onClick={() => {
+                soundEngine.playClick();
+                toggleDrawer();
+              }}
               className="relative p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer shrink-0"
+              title="Android Bildirim Çekmecesi & Hızlı Ayarlar"
             >
               <Bell className="w-4 h-4 shrink-0" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0B0E15]" />
+              {unreadNotificationsCount > 0 && (
+                <span className="absolute top-1 right-1 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold ring-2 ring-[#0B0E15]">
+                  {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
+                </span>
+              )}
             </button>
-
-            {showNotification && (
-              <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-[#0A0D15]/95 border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.08)] backdrop-blur-2xl p-3.5 z-50 animate-in fade-in slide-in-from-top-2">
-                <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-                  <span className="text-xs font-semibold text-white">{t.header.notifications}</span>
-                  <button onClick={() => setShowNotification(false)} className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="py-2 flex flex-col gap-2">
-                  <div className="p-2.5 rounded-xl bg-[#0D111C]/80 border border-white/[0.06] flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-xs font-medium text-white">{t.header.adPackFinished}</span>
-                      <span className="text-[11px] text-slate-400">
-                        {t.header.adPackFinishedDesc}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-[#0D111C]/80 border border-white/[0.06] flex items-start gap-2.5">
-                    <Zap className="w-4 h-4 text-cyan-400 mt-0.5 shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-xs font-medium text-white">{t.header.gpuNodeBoost}</span>
-                      <span className="text-[11px] text-slate-400">
-                        {t.header.gpuNodeBoostDesc}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* User Profile / Auth Button */}

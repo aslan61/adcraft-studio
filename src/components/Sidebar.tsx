@@ -17,10 +17,12 @@ import {
   Mic,
   History,
   Sun,
-  Moon
+  Moon,
+  ShieldCheck
 } from 'lucide-react';
 import { useAdCraftStore } from '../store/useAdCraftStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { useNotificationStore } from '../store/useNotificationStore';
 import { soundEngine } from '../utils/audioEngine';
 import { useTranslation } from '../i18n/translations';
 import { AdCraftLogo } from './AdCraftLogo';
@@ -43,6 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { t, language } = useTranslation();
   const { theme, toggleTheme, activeNavTab, setActiveNavTab, workspaceName, setActiveView, exportQueue, setVoiceoverModalOpen, versions, setVersionHistoryModalOpen } = useAdCraftStore();
   const { user, profile, setAuthModalOpen, setPricingModalOpen, setAccountModalOpen, setRewardedAdModalOpen } = useAuthStore();
+  const { lastTestedAt, latestQaReport, setQaTestModalOpen } = useNotificationStore();
 
   const navItems = [
     {
@@ -51,6 +54,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Film,
       badge: null,
       action: () => setActiveView('editor')
+    },
+    {
+      id: 'qa-tester',
+      label: language === 'tr' ? 'Kreatif QA Testi' : 'Creative QA Test',
+      icon: ShieldCheck,
+      badge: !lastTestedAt ? (language === 'tr' ? 'Test Yapılmadı' : 'Untested') : `${latestQaReport?.overallScore ?? 100}%`,
+      badgeColor: !lastTestedAt
+        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+        : (latestQaReport?.failedCount ?? 0) > 0
+        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+        : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+      action: () => setQaTestModalOpen(true)
     },
     {
       id: 'media-assets',

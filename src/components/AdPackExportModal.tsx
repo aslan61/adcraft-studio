@@ -9,10 +9,12 @@ import {
   Layers,
   ArrowRight,
   Cpu,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useAdCraftStore } from '../store/useAdCraftStore';
+import { useNotificationStore } from '../store/useNotificationStore';
 import { soundEngine } from '../utils/audioEngine';
 import { exportCreativeZipPack, exportCanvasSnapshot } from '../utils/exportPipeline';
 import { useTranslation } from '../i18n/translations';
@@ -30,6 +32,7 @@ export const AdPackExportModal: React.FC<AdPackExportModalProps> = ({
 }) => {
   const { t, language } = useTranslation();
   const { hookCopy, backgroundConfig, audioConfig, assets, activeAssetId, addExportItem } = useAdCraftStore();
+  const { addNotification, lastTestedAt, setQaTestModalOpen } = useNotificationStore();
   const activeAsset = assets.find((a) => a.id === activeAssetId) || assets[0];
 
   const [isZipping, setIsZipping] = useState(false);
@@ -139,11 +142,24 @@ export const AdPackExportModal: React.FC<AdPackExportModalProps> = ({
           size: '28.4 MB',
           timestamp: 'Just now'
         });
+
+        // Dispatch Android System Notification
+        addNotification({
+          title: language === 'tr' ? '🎬 Ad Pack Dışa Aktarımı Hazır' : '🎬 Ad Pack Conforming Ready',
+          message: language === 'tr'
+            ? 'Kampanya Ad Pack (4 parça) A100 GPU kümesinde başarıyla derlendi ve indirmeye hazır.'
+            : 'Ad Pack (4 assets) rendered at 4K 60fps and added to export queue.',
+          type: 'export_success',
+          priority: 'normal',
+          actionLabel: language === 'tr' ? 'Kuyruğu Gör' : 'View Queue',
+          actionType: 'view_export',
+          category: 'GPU Sentez'
+        });
       }
     }, 150);
 
     return () => clearInterval(interval);
-  }, [isOpen, activeAsset, addExportItem]);
+  }, [isOpen, activeAsset, addExportItem, addNotification, language]);
 
   if (!isOpen) return null;
 
@@ -173,6 +189,31 @@ export const AdPackExportModal: React.FC<AdPackExportModalProps> = ({
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Untested QA Pre-Flight Reminder Banner */}
+        {!lastTestedAt && (
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between animate-in fade-in">
+            <div className="flex items-center gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-amber-200">
+                  {language === 'tr' ? 'Kreatif QA Testi Yapılmadı!' : 'Creative QA Test Not Executed!'}
+                </span>
+                <span className="text-[11px] text-slate-300">
+                  {language === 'tr'
+                    ? 'TikTok ve Reels güvenli alan taşmalarını önlemek için test önerilir.'
+                    : 'Recommended to verify safe zones and audio sync before launch.'}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setQaTestModalOpen(true)}
+              className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
+            >
+              {language === 'tr' ? 'Hemen Test Et' : 'Run Test'}
+            </button>
+          </div>
+        )}
 
         {/* Campaign Meta Card */}
         <div className="p-3 rounded-xl bg-[#0D111C]/80 border border-white/[0.06] flex items-center justify-between">
