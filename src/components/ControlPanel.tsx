@@ -89,6 +89,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ canvasRef, onOpenAdP
   const [isExportingSnapshot, setIsExportingSnapshot] = useState(false);
   const [isExportingVideo, setIsExportingVideo] = useState(false);
   const [videoExportProgress, setVideoExportProgress] = useState(0);
+  const [videoExportDuration, setVideoExportDuration] = useState<5 | 10 | 15>(5);
   const [showBadgeCustomizer, setShowBadgeCustomizer] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -223,16 +224,16 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ canvasRef, onOpenAdP
     soundEngine.playWhoosh();
 
     const videoId = `vid-${Date.now()}`;
-    const filename = `${projectName || 'AdCraft'}_${aspectRatio.replace(':', 'x')}_60fps.mp4`;
+    const filename = `${projectName || 'AdCraft'}_${aspectRatio.replace(':', 'x')}_${videoExportDuration}s_60fps.mp4`;
 
     addExportItem({
       id: videoId,
       title: filename,
-      format: '60fps ProRes MP4',
+      format: `${videoExportDuration}s 60fps MP4`,
       aspectRatio,
       status: 'rendering',
       progress: 5,
-      size: '14.8 MB',
+      size: `${videoExportDuration === 5 ? '14.8' : videoExportDuration === 10 ? '28.5' : '42.1'} MB`,
       timestamp: 'Just now'
     });
 
@@ -243,7 +244,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ canvasRef, onOpenAdP
         format: 'MP4',
         title: filename.replace('.mp4', ''),
         fps: 60,
-        durationSec: 5,
+        durationSec: videoExportDuration,
         onProgress: (pct) => {
           setVideoExportProgress(pct);
           updateExportProgress(videoId, pct, pct >= 100 ? 'ready' : 'rendering');
@@ -911,40 +912,68 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ canvasRef, onOpenAdP
         </div>
 
         {/* Export Quick Actions */}
-        <div className="grid grid-cols-2 gap-2">
-          {/* 60fps Video Export */}
-          <button
-            id="quick-video-btn"
-            onClick={handleExportVideo}
-            disabled={isExportingVideo || isExportingSnapshot}
-            className="py-2.5 px-2.5 rounded-xl bg-indigo-600/15 border border-indigo-500/30 hover:bg-indigo-600/25 hover:border-indigo-500/50 text-indigo-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm relative overflow-hidden disabled:opacity-50"
-            title="Render 60fps ProRes MP4 Video (5 credits)"
-          >
-            {isExportingVideo && (
-              <div
-                className="absolute inset-0 bg-indigo-600/40 transition-all duration-200"
-                style={{ width: `${videoExportProgress}%` }}
-              />
-            )}
-            <Video className="w-3.5 h-3.5 text-indigo-400 shrink-0 relative z-10" />
-            <span className="truncate relative z-10 font-medium">
-              {isExportingVideo ? `${videoExportProgress}%` : t.controlPanel.export60fpsVideo}
+        <div className="flex flex-col gap-2">
+          {/* Duration Selector */}
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] text-slate-400 font-['JetBrains_Mono'] uppercase tracking-wider font-semibold">
+              {language === 'tr' ? 'Render Video Süresi' : 'Render Clip Length'}
             </span>
-          </button>
+            <div className="flex items-center gap-1 bg-[#0F131D] p-0.5 rounded-lg border border-white/[0.08]">
+              {([5, 10, 15] as const).map((dur) => (
+                <button
+                  key={dur}
+                  type="button"
+                  onClick={() => {
+                    soundEngine.playClick();
+                    setVideoExportDuration(dur);
+                  }}
+                  className={`px-2 py-0.5 rounded text-[10px] font-['JetBrains_Mono'] font-bold transition-all cursor-pointer ${
+                    videoExportDuration === dur
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {dur}s
+                </button>
+              ))}
+            </div>
+          </div>
 
-          {/* Snapshot Quick Action */}
-          <button
-            id="quick-snapshot-btn"
-            onClick={handleSnapshot}
-            disabled={isExportingSnapshot || isExportingVideo}
-            className="py-2.5 px-2.5 rounded-xl bg-[#0F131D] border border-white/[0.08] hover:border-white/20 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm disabled:opacity-50"
-            title="Export 4K Ultra PNG Snapshot"
-          >
-            <Camera className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-            <span className="truncate font-medium">
-              {isExportingSnapshot ? t.controlPanel.capturingSnapshot : t.controlPanel.exportHighResPng}
-            </span>
-          </button>
+          <div className="grid grid-cols-2 gap-2">
+            {/* 60fps Video Export */}
+            <button
+              id="quick-video-btn"
+              onClick={handleExportVideo}
+              disabled={isExportingVideo || isExportingSnapshot}
+              className="py-2.5 px-2.5 rounded-xl bg-indigo-600/15 border border-indigo-500/30 hover:bg-indigo-600/25 hover:border-indigo-500/50 text-indigo-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm relative overflow-hidden disabled:opacity-50"
+              title={`Render ${videoExportDuration}s 60fps ProRes MP4 Video (5 credits)`}
+            >
+              {isExportingVideo && (
+                <div
+                  className="absolute inset-0 bg-indigo-600/40 transition-all duration-200"
+                  style={{ width: `${videoExportProgress}%` }}
+                />
+              )}
+              <Video className="w-3.5 h-3.5 text-indigo-400 shrink-0 relative z-10" />
+              <span className="truncate relative z-10 font-medium">
+                {isExportingVideo ? `${videoExportProgress}%` : `${videoExportDuration}s · ${t.controlPanel.export60fpsVideo}`}
+              </span>
+            </button>
+
+            {/* Snapshot Quick Action */}
+            <button
+              id="quick-snapshot-btn"
+              onClick={handleSnapshot}
+              disabled={isExportingSnapshot || isExportingVideo}
+              className="py-2.5 px-2.5 rounded-xl bg-[#0F131D] border border-white/[0.08] hover:border-white/20 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm disabled:opacity-50"
+              title="Export 4K Ultra PNG Snapshot"
+            >
+              <Camera className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+              <span className="truncate font-medium">
+                {isExportingSnapshot ? t.controlPanel.capturingSnapshot : t.controlPanel.exportHighResPng}
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Primary Big Action Button: Synthesize Ad Pack */}
