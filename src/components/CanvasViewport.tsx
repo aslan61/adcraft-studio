@@ -736,6 +736,9 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ canvasRef }) => 
       const bannerY = Math.min(phoneY + 115, height - 250);
 
       const style = hookCopy.hookStyle || 'TikTok Banner';
+      const words = (hookCopy.headline || '').trim().split(/\s+/);
+      const isKaraoke = Boolean(hookCopy.karaokeEffect) && words.length > 1;
+      const activeWordIdx = isKaraoke ? Math.floor((sec * 2.8) % words.length) : -1;
 
       if (style === 'Cyber Glow') {
         ctx.fillStyle = 'rgba(8, 12, 22, 0.94)';
@@ -749,11 +752,36 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ canvasRef }) => 
         ctx.lineWidth = 3;
         ctx.stroke();
 
-        ctx.fillStyle = '#FFFFFF';
         ctx.font = '900 42px Geist, sans-serif';
-        ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(hookCopy.headline, width / 2, bannerY + bannerH / 2);
+
+        if (isKaraoke) {
+          const spaceW = ctx.measureText(' ').width;
+          const wordMetrics = words.map((w) => ({ word: w, width: ctx.measureText(w).width }));
+          const totalW = wordMetrics.reduce((acc, m) => acc + m.width, 0) + (words.length - 1) * spaceW;
+          let curX = (width - totalW) / 2;
+          const textY = bannerY + bannerH / 2;
+
+          wordMetrics.forEach((m, idx) => {
+            const isActive = idx === activeWordIdx;
+            ctx.save();
+            if (isActive) {
+              ctx.shadowColor = 'rgba(34, 211, 238, 1)';
+              ctx.shadowBlur = 35;
+              ctx.fillStyle = '#22D3EE';
+            } else {
+              ctx.fillStyle = '#FFFFFF';
+            }
+            ctx.textAlign = 'left';
+            ctx.fillText(m.word, curX, isActive ? textY - 3 : textY);
+            ctx.restore();
+            curX += m.width + spaceW;
+          });
+        } else {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.textAlign = 'center';
+          ctx.fillText(hookCopy.headline, width / 2, bannerY + bannerH / 2);
+        }
       } else if (style === 'Glassmorphic') {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
         ctx.shadowColor = isSecHook ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.5)';
@@ -766,20 +794,64 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ canvasRef }) => 
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        ctx.fillStyle = '#FFFFFF';
         ctx.font = '900 42px Geist, sans-serif';
-        ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(hookCopy.headline, width / 2, bannerY + bannerH / 2);
+
+        if (isKaraoke) {
+          const spaceW = ctx.measureText(' ').width;
+          const wordMetrics = words.map((w) => ({ word: w, width: ctx.measureText(w).width }));
+          const totalW = wordMetrics.reduce((acc, m) => acc + m.width, 0) + (words.length - 1) * spaceW;
+          let curX = (width - totalW) / 2;
+          const textY = bannerY + bannerH / 2;
+
+          wordMetrics.forEach((m, idx) => {
+            const isActive = idx === activeWordIdx;
+            ctx.save();
+            if (isActive) {
+              ctx.shadowColor = 'rgba(251, 191, 36, 1)';
+              ctx.shadowBlur = 30;
+              ctx.fillStyle = '#FDE047';
+            } else {
+              ctx.fillStyle = '#FFFFFF';
+            }
+            ctx.textAlign = 'left';
+            ctx.fillText(m.word, curX, isActive ? textY - 3 : textY);
+            ctx.restore();
+            curX += m.width + spaceW;
+          });
+        } else {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.textAlign = 'center';
+          ctx.fillText(hookCopy.headline, width / 2, bannerY + bannerH / 2);
+        }
       } else if (style === 'Minimalist') {
         ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
         ctx.shadowBlur = 30;
         ctx.shadowOffsetY = 6;
-        ctx.fillStyle = '#FFFFFF';
         ctx.font = '900 46px Geist, sans-serif';
-        ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(hookCopy.headline, width / 2, bannerY + bannerH / 2);
+
+        if (isKaraoke) {
+          const spaceW = ctx.measureText(' ').width;
+          const wordMetrics = words.map((w) => ({ word: w, width: ctx.measureText(w).width }));
+          const totalW = wordMetrics.reduce((acc, m) => acc + m.width, 0) + (words.length - 1) * spaceW;
+          let curX = (width - totalW) / 2;
+          const textY = bannerY + bannerH / 2;
+
+          wordMetrics.forEach((m, idx) => {
+            const isActive = idx === activeWordIdx;
+            ctx.save();
+            ctx.fillStyle = isActive ? '#22D3EE' : '#FFFFFF';
+            ctx.textAlign = 'left';
+            ctx.fillText(m.word, curX, isActive ? textY - 4 : textY);
+            ctx.restore();
+            curX += m.width + spaceW;
+          });
+        } else {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.textAlign = 'center';
+          ctx.fillText(hookCopy.headline, width / 2, bannerY + bannerH / 2);
+        }
       } else {
         // TikTok Banner (Default)
         ctx.translate(width / 2, bannerY + bannerH / 2);
@@ -793,11 +865,38 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ canvasRef }) => 
         ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 24);
         ctx.fill();
 
-        ctx.fillStyle = '#000000';
         ctx.font = '900 42px Geist, sans-serif';
-        ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(hookCopy.headline, width / 2, bannerY + bannerH / 2);
+
+        if (isKaraoke) {
+          const spaceW = ctx.measureText(' ').width;
+          const wordMetrics = words.map((w) => ({ word: w, width: ctx.measureText(w).width }));
+          const totalW = wordMetrics.reduce((acc, m) => acc + m.width, 0) + (words.length - 1) * spaceW;
+          let curX = (width - totalW) / 2;
+          const textY = bannerY + bannerH / 2;
+
+          wordMetrics.forEach((m, idx) => {
+            const isActive = idx === activeWordIdx;
+            ctx.save();
+            if (isActive) {
+              ctx.fillStyle = '#000000';
+              ctx.beginPath();
+              ctx.roundRect(curX - 6, textY - 26, m.width + 12, 52, 12);
+              ctx.fill();
+              ctx.fillStyle = '#FDE047';
+            } else {
+              ctx.fillStyle = '#000000';
+            }
+            ctx.textAlign = 'left';
+            ctx.fillText(m.word, curX, isActive ? textY - 2 : textY);
+            ctx.restore();
+            curX += m.width + spaceW;
+          });
+        } else {
+          ctx.fillStyle = '#000000';
+          ctx.textAlign = 'center';
+          ctx.fillText(hookCopy.headline, width / 2, bannerY + bannerH / 2);
+        }
       }
       ctx.restore();
 
@@ -898,19 +997,86 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ canvasRef }) => 
         ctx.fill();
         ctx.stroke();
 
+        // Authentic Apple Vector Silhouette
+        ctx.save();
+        const appleX = startX + 38;
+        const appleY = badgeY + bH / 2;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(appleX - 3.5, appleY + 1, 6, 0, Math.PI * 2);
+        ctx.arc(appleX + 3.5, appleY + 1, 6, 0, Math.PI * 2);
+        ctx.fill();
+        // Apple leaf
+        ctx.beginPath();
+        ctx.ellipse(appleX + 1.5, appleY - 7, 3, 1.8, Math.PI / 4, 0, Math.PI * 2);
+        ctx.fill();
+        // Apple bite cutout
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        ctx.beginPath();
+        ctx.arc(appleX + 8, appleY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
         ctx.fillStyle = '#FFFFFF';
         ctx.font = 'bold 16px Geist, sans-serif';
-        ctx.textAlign = 'center';
+        ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(' App Store', startX + bW / 2, badgeY + bH / 2);
+        ctx.fillText('App Store', startX + 56, badgeY + bH / 2);
 
         // Google Play Badge Box
+        const gpBoxX = startX + bW + 16;
         ctx.beginPath();
-        ctx.roundRect(startX + bW + 16, badgeY, bW, bH, 12);
+        ctx.roundRect(gpBoxX, badgeY, bW, bH, 12);
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillText('▶ Google Play', startX + bW + 16 + bW / 2, badgeY + bH / 2);
+        // Authentic Google Play Multi-Segment Color Triangle
+        ctx.save();
+        const gpX = gpBoxX + 32;
+        const gpY = badgeY + bH / 2;
+
+        // Blue Segment (left)
+        ctx.fillStyle = '#4285F4';
+        ctx.beginPath();
+        ctx.moveTo(gpX - 9, gpY - 11);
+        ctx.lineTo(gpX + 1, gpY);
+        ctx.lineTo(gpX - 9, gpY + 11);
+        ctx.closePath();
+        ctx.fill();
+
+        // Green Segment (bottom)
+        ctx.fillStyle = '#34A853';
+        ctx.beginPath();
+        ctx.moveTo(gpX - 9, gpY + 11);
+        ctx.lineTo(gpX + 1, gpY);
+        ctx.lineTo(gpX + 9, gpY + 5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Yellow Segment (right)
+        ctx.fillStyle = '#FBBC04';
+        ctx.beginPath();
+        ctx.moveTo(gpX + 1, gpY);
+        ctx.lineTo(gpX + 13, gpY);
+        ctx.lineTo(gpX + 9, gpY + 5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Red Segment (top)
+        ctx.fillStyle = '#EA4335';
+        ctx.beginPath();
+        ctx.moveTo(gpX - 9, gpY - 11);
+        ctx.lineTo(gpX + 1, gpY);
+        ctx.lineTo(gpX + 9, gpY - 5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 16px Geist, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Google Play', gpBoxX + 52, badgeY + bH / 2);
         ctx.restore();
       }
     };
@@ -1574,21 +1740,54 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ canvasRef }) => 
                 </div>
               )}
 
-              {/* Marketing Hook Banner (Top-Center) with Dynamic HookStyle */}
+              {/* Marketing Hook Banner (Top-Center) with Dynamic HookStyle & Karaoke Word Bounce */}
               <div className="relative z-20 mt-14 px-2.5 flex flex-col items-center text-center">
                 <div className={getHookStyleClasses(hookCopy.hookStyle, isHookPhase)}>
-                  <p
-                    className={`font-['Geist'] text-xs font-black tracking-tight uppercase leading-none drop-shadow ${
-                      hookCopy.hookStyle === 'Cyber Glow' ||
-                      hookCopy.hookStyle === 'Studio Sleek' ||
-                      hookCopy.hookStyle === 'Glassmorphic' ||
-                      hookCopy.hookStyle === 'Minimalist'
-                        ? 'text-white'
-                        : 'text-black'
-                    }`}
-                  >
-                    {hookCopy.headline}
-                  </p>
+                  {hookCopy.karaokeEffect && hookCopy.headline ? (
+                    <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1">
+                      {hookCopy.headline.split(/\s+/).map((word, wIdx, arr) => {
+                        const isCurrentWord =
+                          timeline.isPlaying
+                            ? Math.floor((timeline.currentTime * 2.8) % arr.length) === wIdx
+                            : wIdx === 0;
+                        const isDarkStyle =
+                          hookCopy.hookStyle === 'Cyber Glow' ||
+                          hookCopy.hookStyle === 'Studio Sleek' ||
+                          hookCopy.hookStyle === 'Glassmorphic' ||
+                          hookCopy.hookStyle === 'Minimalist';
+
+                        return (
+                          <span
+                            key={wIdx}
+                            className={`font-['Geist'] text-xs font-black tracking-tight uppercase leading-none transition-all duration-100 ${
+                              isCurrentWord
+                                ? isDarkStyle
+                                  ? 'text-cyan-300 scale-110 drop-shadow-[0_0_12px_rgba(34,211,238,0.9)] -translate-y-0.5'
+                                  : 'bg-black text-amber-300 px-1 py-0.5 rounded shadow-md scale-110 -translate-y-0.5'
+                                : isDarkStyle
+                                ? 'text-white/90'
+                                : 'text-black'
+                            }`}
+                          >
+                            {word}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p
+                      className={`font-['Geist'] text-xs font-black tracking-tight uppercase leading-none drop-shadow ${
+                        hookCopy.hookStyle === 'Cyber Glow' ||
+                        hookCopy.hookStyle === 'Studio Sleek' ||
+                        hookCopy.hookStyle === 'Glassmorphic' ||
+                        hookCopy.hookStyle === 'Minimalist'
+                          ? 'text-white'
+                          : 'text-black'
+                      }`}
+                    >
+                      {hookCopy.headline}
+                    </p>
+                  )}
                 </div>
                 <span className="mt-1 px-2.5 py-0.5 rounded-lg bg-black/80 backdrop-blur text-slate-300 font-['JetBrains_Mono'] text-[10px] tracking-wider border border-white/15">
                   {hookCopy.subHook}
@@ -1630,12 +1829,19 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ canvasRef }) => 
                 {/* App Store & Google Play vector badges on preview */}
                 {hookCopy.showStoreBadges !== false && (
                   <div className="flex items-center justify-center gap-1.5 pt-0.5 animate-in fade-in">
-                    <div className="px-2 py-0.5 rounded-md bg-black/80 border border-white/20 text-white font-['Geist'] text-[9px] font-semibold flex items-center gap-1 shadow">
-                      <span></span>
+                    <div className="px-2.5 py-1 rounded-lg bg-black/85 border border-white/20 text-white font-['Geist'] text-[10px] font-semibold flex items-center gap-1.5 shadow">
+                      <svg className="w-3 h-3 fill-white shrink-0" viewBox="0 0 170 170">
+                        <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.04-7.67-7.81-11.96-14.31-7.29-11.08-13.04-23.77-17.26-38.07-4.22-14.3-6.33-27.42-6.33-39.38 0-14.93 3.65-27.18 10.96-36.75 7.3-9.57 16.59-14.47 27.86-14.69 4.35 0 9.4 1.13 15.15 3.39 5.76 2.26 9.53 3.44 11.32 3.55 1.52-.11 5.37-1.34 11.55-3.69 6.18-2.35 11.32-3.44 15.42-3.26 12.08.65 21.75 5.25 29.02 13.8-10.55 6.42-15.7 15.34-15.44 26.77.27 9.03 3.69 16.55 10.26 22.56 6.58 6.01 14.4 9.4 23.47 10.18-2.07 6.42-4.63 12.77-7.69 19.06zM119.22 33.15c0-7.39 2.66-14.28 7.97-20.67 5.31-6.39 11.83-10.55 19.57-12.48.22 1.41.33 2.72.33 3.91 0 7.39-2.77 14.47-8.31 21.23-5.54 6.77-12.24 10.77-20.1 12.01-.1-.97-.15-2.06-.15-3.29z"/>
+                      </svg>
                       <span>App Store</span>
                     </div>
-                    <div className="px-2 py-0.5 rounded-md bg-black/80 border border-white/20 text-white font-['Geist'] text-[9px] font-semibold flex items-center gap-1 shadow">
-                      <span>▶</span>
+                    <div className="px-2.5 py-1 rounded-lg bg-black/85 border border-white/20 text-white font-['Geist'] text-[10px] font-semibold flex items-center gap-1.5 shadow">
+                      <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M3.6 1.8L13.8 12 3.6 22.2c-.4-.4-.6-1-.6-1.7V3.5c0-.7.2-1.3.6-1.7z"/>
+                        <path fill="#FBBC04" d="M17.4 8.4l-3.6 3.6 3.6 3.6 2.4-1.4c.7-.4 1.1-1.2 1.1-2.1s-.4-1.7-1.1-2.1l-2.4-1.6z"/>
+                        <path fill="#34A853" d="M13.8 12L3.6 22.2c.5.5 1.3.6 2 .2l11.8-6.8-3.6-3.6z"/>
+                        <path fill="#EA4335" d="M3.6 1.8c.7-.4 1.5-.3 2 .2l11.8 6.4-3.6 3.6L3.6 1.8z"/>
+                      </svg>
                       <span>Google Play</span>
                     </div>
                   </div>

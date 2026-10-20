@@ -603,15 +603,29 @@ export const TimelineSequencer: React.FC = () => {
                 })}
               </div>
 
-              {/* Dynamic Sound Wave SVG Background */}
-              <svg className="absolute inset-0 w-full h-full text-cyan-400/20 pointer-events-none" viewBox="0 0 400 20" preserveAspectRatio="none">
-                <path
-                  d="M0 10 Q10 2 20 10 T40 10 T60 3 T80 18 T100 8 T120 10 T140 2 T160 17 T180 8 T200 12 T220 2 T240 18 T260 9 T280 12 T300 10 T320 3 T340 18 T360 8 T380 12 T400 10"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                />
-              </svg>
+              {/* Dynamic Animated Sound Wave Bars */}
+              <div className="absolute inset-0 flex items-center justify-between px-2 pointer-events-none opacity-30 overflow-hidden">
+                {Array.from({ length: 48 }).map((_, barIdx) => {
+                  const isActive = timeline.isPlaying && !audioConfig.isMuted && audioConfig.volume > 0;
+                  const bpmFactor =
+                    audioConfig.genre === 'Lo-Fi Chill Hop'
+                      ? 8
+                      : audioConfig.genre === 'Cyberpunk Synthwave'
+                      ? 11
+                      : 14;
+                  const barHeight = isActive
+                    ? Math.max(18, Math.sin(timeline.currentTime * bpmFactor + barIdx * 0.45) * 40 + 55)
+                    : Math.max(15, Math.sin(barIdx * 0.6) * 30 + 45);
+
+                  return (
+                    <span
+                      key={barIdx}
+                      style={{ height: `${barHeight}%` }}
+                      className="w-1 bg-cyan-400 rounded-full transition-all duration-75"
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
