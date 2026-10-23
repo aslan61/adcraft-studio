@@ -1572,8 +1572,22 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ canvasRef }) => 
               )}
 
               {/* Media Content Layer (Video or Image) */}
-              <div className="absolute inset-0 z-0 bg-black overflow-hidden">
-                {activeAsset?.type === 'video' ? (
+              <div className="absolute inset-0 z-0 bg-black overflow-hidden flex items-center justify-center">
+                {!activeAsset || (!activeAsset.url && !activeAsset.thumbnailUrl) ? (
+                  <div className="flex flex-col items-center justify-center p-6 text-center z-10 select-none">
+                    <div className="w-14 h-14 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center mb-3 text-indigo-400">
+                      <Gamepad2 className="w-7 h-7" />
+                    </div>
+                    <span className="text-xs font-bold text-white mb-1 font-['Geist']">
+                      {language === 'tr' ? 'Medya Varlığı Seçin' : 'Select a Media Asset'}
+                    </span>
+                    <span className="text-[10px] text-slate-400 max-w-[190px] leading-relaxed font-['Geist']">
+                      {language === 'tr'
+                        ? 'Sol kütüphaneden bir varlık seçin veya yeni ekran kaydı ekleyin.'
+                        : 'Pick an asset from the left library or start screen recording.'}
+                    </span>
+                  </div>
+                ) : activeAsset.type === 'video' ? (
                   <video
                     ref={videoRef}
                     src={activeAsset.url}
@@ -1594,9 +1608,9 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({ canvasRef }) => 
                 ) : (
                   <img
                     alt="Creative Screenshot"
-                    src={activeAsset?.url || activeAsset?.thumbnailUrl}
+                    src={activeAsset.url || activeAsset.thumbnailUrl}
                     style={
-                      activeAsset?.cropConfig?.isAutoCropped
+                      activeAsset.cropConfig?.isAutoCropped
                         ? {
                             transform: `scale(${activeAsset.cropConfig.zoom || 1}) translate(${(50 - (activeAsset.cropConfig.focalX ?? 50)) * 0.7}%, ${(50 - (activeAsset.cropConfig.focalY ?? 50)) * 0.7}%)`,
                             transition: 'transform 0.2s ease-out'
