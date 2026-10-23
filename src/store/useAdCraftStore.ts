@@ -955,8 +955,10 @@ export const useAdCraftStore = create<AdCraftState>()(
               }
             })
           });
-          const data = await res.json();
-          serverSuccess = !!data.success;
+          if (res.ok) {
+            const data = await res.json();
+            serverSuccess = !!data.success;
+          }
         } catch {
           serverSuccess = false;
         }
@@ -990,6 +992,7 @@ export const useAdCraftStore = create<AdCraftState>()(
       loadProjectsFromServer: async () => {
         try {
           const res = await fetch('/api/projects');
+          if (!res.ok) return [];
           const data = await res.json();
           return data.projects || [];
         } catch {
@@ -1000,6 +1003,7 @@ export const useAdCraftStore = create<AdCraftState>()(
       deleteProjectFromServer: async (id: string) => {
         try {
           const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+          if (!res.ok) return false;
           const data = await res.json();
           return !!data.success;
         } catch {
