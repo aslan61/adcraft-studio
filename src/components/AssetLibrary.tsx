@@ -15,7 +15,9 @@ import {
   Sparkles,
   Trash2,
   Square,
-  Video
+  Video,
+  Search,
+  X
 } from 'lucide-react';
 import { useAdCraftStore } from '../store/useAdCraftStore';
 import { MediaAsset } from '../types';
@@ -39,6 +41,7 @@ export const AssetLibrary: React.FC = () => {
     toggleAutoVisionClassifier,
     setHookCopy,
     searchQuery,
+    setSearchQuery,
     setAutoCropModalOpen
   } = useAdCraftStore();
 
@@ -605,22 +608,68 @@ export const AssetLibrary: React.FC = () => {
 
       {/* Assets List */}
       <div className="flex flex-col gap-2.5 overflow-y-auto pr-1 flex-1 min-h-[300px]">
-        {filteredAssets.map((asset) => {
-          const isActive = activeAssetId === asset.id;
+        {filteredAssets.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] my-auto">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-3 text-indigo-400">
+              {searchQuery ? <Search className="w-6 h-6" /> : <FolderArchive className="w-6 h-6" />}
+            </div>
+            <h4 className="text-xs font-bold text-white mb-1 font-['Geist']">
+              {searchQuery
+                ? (language === 'tr' ? 'Eşleşen Varlık Bulunamadı' : 'No Matching Assets Found')
+                : (language === 'tr' ? `${getFilterLabel(selectedFilter)} Varlığı Yok` : `No ${selectedFilter} Assets`)}
+            </h4>
+            <p className="text-[11px] text-slate-400 max-w-[210px] mb-4 leading-relaxed font-['Geist']">
+              {searchQuery
+                ? (language === 'tr' ? `"${searchQuery}" araması için sonuç yok.` : `No results for "${searchQuery}".`)
+                : (language === 'tr' ? 'Ekran kaydı başlatın veya cihazınızdan video/görsel yükleyin.' : 'Record screen gameplay or upload media from your device.')}
+            </p>
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-white font-medium transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-sm"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span>{language === 'tr' ? 'Aramayı Temizle' : 'Clear Search'}</span>
+              </button>
+            ) : (
+              <div className="flex flex-col gap-2 w-full max-w-[200px]">
+                <button
+                  type="button"
+                  onClick={handleStartScreenRecording}
+                  className="w-full px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                >
+                  <Video className="w-3.5 h-3.5 text-rose-400" />
+                  <span>{language === 'tr' ? 'Oynanış Kaydet' : 'Record Gameplay'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full px-3 py-1.5 rounded-xl studio-btn-primary text-white text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                >
+                  <UploadCloud className="w-3.5 h-3.5" />
+                  <span>{language === 'tr' ? 'Dosya Yükle' : 'Upload Media'}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          filteredAssets.map((asset) => {
+            const isActive = activeAssetId === asset.id;
 
-          return (
-            <div
-              key={asset.id}
-              onClick={() => {
-                soundEngine.playClick();
-                setActiveAssetId(asset.id);
-              }}
-              className={`relative rounded-xl p-2.5 border transition-all cursor-pointer group ${
-                isActive
-                  ? 'bg-slate-900 border-indigo-500/80 shadow-lg shadow-indigo-900/20 ring-1 ring-indigo-500/40'
-                  : 'bg-slate-900/50 border-slate-800/80 hover:bg-slate-900/80 hover:border-slate-700'
-              }`}
-            >
+            return (
+              <div
+                key={asset.id}
+                onClick={() => {
+                  soundEngine.playClick();
+                  setActiveAssetId(asset.id);
+                }}
+                className={`relative rounded-xl p-2.5 border transition-all cursor-pointer group studio-interactive-card ${
+                  isActive
+                    ? 'bg-slate-900 border-indigo-500/90 shadow-lg shadow-indigo-950/40 ring-1 ring-indigo-500/50'
+                    : 'bg-slate-900/60 border-slate-800/80 hover:bg-slate-900/90 hover:border-slate-700'
+                }`}
+              >
               <div className="flex gap-3">
                 {/* Thumbnail */}
                 <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-black border border-slate-800">
@@ -766,7 +815,7 @@ export const AssetLibrary: React.FC = () => {
               )}
             </div>
           );
-        })}
+        }))}
       </div>
 
       {/* Bottom Feature: Auto-Vision Classifier */}
