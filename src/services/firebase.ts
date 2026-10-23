@@ -299,16 +299,21 @@ export async function recordPurchase(record: PurchaseRecord): Promise<void> {
   const sanitizedRecord: PurchaseRecord = {
     ...record,
     id: record.id.slice(0, 120),
-    planName: record.planName.slice(0, 95)
+    planName: record.planName.slice(0, 95),
+    creditsGranted: Math.min(Math.max(0, record.creditsGranted), 10000)
   };
   const subPath = `users/${sanitizedRecord.userId}/subscriptions/${sanitizedRecord.id}`;
-  try {
-    const subDocRef = doc(db, 'users', sanitizedRecord.userId, 'subscriptions', sanitizedRecord.id);
-    await setDoc(subDocRef, sanitizedRecord);
+  const userDocRef = doc(db, 'users', sanitizedRecord.userId);
+  const subDocRef = doc(db, 'users', sanitizedRecord.userId, 'subscriptions', sanitizedRecord.id);
 
-    // Update user credits & plan in user profile
-    const current = await getUserProfile(record.userId);
-    if (current) {
+  try {
+    await runTransaction(db, async (transaction) => {
+      const userSnapshot = await transaction.get(userDocRef);
+      if (!userSnapshot.exists()) {
+        throw new Error('User profile not found for purchase recording');
+      }
+
+      const current = userSnapshot.data() as UserProfileData;
       const newPlan = record.planId.startsWith('pro')
         ? 'pro'
         : record.planId.startsWith('enterprise')
@@ -318,13 +323,15 @@ export async function recordPurchase(record: PurchaseRecord): Promise<void> {
       const updatedProfile: UserProfileData = {
         ...current,
         plan: newPlan,
-        credits: (current.credits || 0) + record.creditsGranted,
+        credits: (current.credits || 0) + sanitizedRecord.creditsGranted,
         subscriptionStatus: 'active',
         subscriptionPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date().toISOString()
       };
-      await saveUserProfile(updatedProfile);
-    }
+
+      transaction.set(subDocRef, sanitizedRecord);
+      transaction.set(userDocRef, updatedProfile);
+    });
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, subPath);
   }
