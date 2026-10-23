@@ -10,6 +10,71 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
+// Security hardening: Mitigate server fingerprinting
+app.disable('x-powered-by');
+
+// Security hardening: Strict HTTP security headers
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), display-capture=(self)');
+  next();
+});
+
+// Security hardening: In-memory sliding-window rate limiter
+interface RateLimitRecord {
+  count: number;
+  resetAt: number;
+}
+const rateLimitMap: Map<string, RateLimitRecord> = new Map();
+
+const rateLimitInterval = setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of rateLimitMap.entries()) {
+    if (record.resetAt <= now) {
+      rateLimitMap.delete(key);
+    }
+  }
+}, 300000);
+if (rateLimitInterval.unref) rateLimitInterval.unref();
+
+function createRateLimiter(maxRequests: number, windowMs: number) {
+  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const forwarded = req.headers['x-forwarded-for'];
+    const ip = (typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : '') || req.socket.remoteAddress || 'client';
+    const prefix = req.baseUrl || req.path.split('/')[2] || 'api';
+    const key = `${ip}:${prefix}`;
+    const now = Date.now();
+
+    const record = rateLimitMap.get(key);
+    if (!record || record.resetAt <= now) {
+      rateLimitMap.set(key, { count: 1, resetAt: now + windowMs });
+      return next();
+    }
+
+    if (record.count >= maxRequests) {
+      const retryAfterSec = Math.ceil((record.resetAt - now) / 1000);
+      res.setHeader('Retry-After', retryAfterSec);
+      return res.status(429).json({
+        success: false,
+        error: 'Too many requests. Please slow down and try again shortly.',
+        retryAfterSeconds: retryAfterSec
+      });
+    }
+
+    record.count++;
+    next();
+  };
+}
+
+// Apply rate limits to API endpoints
+app.use('/api', createRateLimiter(150, 60000));
+app.use('/api/ai', createRateLimiter(35, 60000));
+app.use('/api/variations', createRateLimiter(35, 60000));
+app.use('/api/scrape-store', createRateLimiter(35, 60000));
+
 // Body parser with 20mb limit for large media or screenshot uploads
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
@@ -56,6 +121,15 @@ export interface SavedProject {
 }
 
 const inMemoryProjects: Map<string, SavedProject> = new Map();
+const MAX_IN_MEMORY_PROJECTS = 100;
+
+function safeSetProject(id: string, project: SavedProject) {
+  if (inMemoryProjects.size >= MAX_IN_MEMORY_PROJECTS && !inMemoryProjects.has(id)) {
+    const oldestKey = inMemoryProjects.keys().next().value;
+    if (oldestKey) inMemoryProjects.delete(oldestKey);
+  }
+  inMemoryProjects.set(id, project);
+}
 
 // Seed initial default project
 inMemoryProjects.set('default-lumina', {
@@ -544,15 +618,16 @@ Output a strict JSON object:
 app.post('/api/scrape-store', async (req, res) => {
   const { url } = req.body || {};
   const clientKey = (req.headers['x-gemini-api-key'] as string) || req.body?.apiKey;
-  const rawUrl = (url || '').toLowerCase();
+  const sanitizedUrl = typeof url === 'string' ? url.trim().slice(0, 300).replace(/["\\]/g, '') : '';
+  const rawUrl = sanitizedUrl.toLowerCase();
 
   const isApple = rawUrl.includes('apple.com');
   const isPlay = rawUrl.includes('google.com') || rawUrl.includes('play.google');
 
   try {
-    if (url && typeof url === 'string' && url.trim().length > 0) {
+    if (sanitizedUrl.length > 0) {
       const prompt = `You are a Senior Mobile Marketing Lead and App Store Optimization (ASO) specialist.
-Analyze this mobile app store link, title, or query: "${url}".
+Analyze this mobile app store link, title, or query: "${sanitizedUrl}".
 Extract realistic, high-converting metadata for mobile ad synthesis and UA performance testing.
 Return strict JSON:
 {
@@ -889,15 +964,18 @@ app.get('/api/projects', (req, res) => {
 app.post('/api/projects/save', (req, res) => {
   try {
     const { id, name, workspace, state } = req.body || {};
-    const projectId = id || `proj-${Date.now()}`;
+    const sanitizedId = typeof id === 'string' && /^[a-zA-Z0-9_\-]+$/.test(id) ? id.slice(0, 128) : `proj-${Date.now()}`;
+    const sanitizedName = typeof name === 'string' ? name.slice(0, 120).trim() : 'Untitled Campaign';
+    const sanitizedWorkspace = typeof workspace === 'string' ? workspace.slice(0, 100).trim() : 'Personal Workspace';
+
     const record: SavedProject = {
-      id: projectId,
-      name: name || 'Untitled Campaign',
-      workspace: workspace || 'Personal Workspace',
+      id: sanitizedId,
+      name: sanitizedName,
+      workspace: sanitizedWorkspace,
       updatedAt: new Date().toISOString(),
-      state: state || {}
+      state: state && typeof state === 'object' ? state : {}
     };
-    inMemoryProjects.set(projectId, record);
+    safeSetProject(sanitizedId, record);
     res.json({ success: true, project: record });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err?.message || 'Failed to save project' });
@@ -908,6 +986,9 @@ app.post('/api/projects/save', (req, res) => {
 app.get('/api/projects/:id', (req, res) => {
   try {
     const { id } = req.params;
+    if (!id || typeof id !== 'string' || !/^[a-zA-Z0-9_\-]+$/.test(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid project ID format' });
+    }
     const project = inMemoryProjects.get(id);
     if (!project) {
       return res.status(404).json({ success: false, message: 'Project not found' });
@@ -922,18 +1003,21 @@ app.get('/api/projects/:id', (req, res) => {
 app.put('/api/projects/:id', (req, res) => {
   try {
     const { id } = req.params;
+    if (!id || typeof id !== 'string' || !/^[a-zA-Z0-9_\-]+$/.test(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid project ID format' });
+    }
     const existing = inMemoryProjects.get(id);
     const { name, workspace, state } = req.body || {};
 
     const updated: SavedProject = {
       id,
-      name: name ?? existing?.name ?? 'Untitled Campaign',
-      workspace: workspace ?? existing?.workspace ?? 'Personal Workspace',
+      name: typeof name === 'string' ? name.slice(0, 120).trim() : (existing?.name ?? 'Untitled Campaign'),
+      workspace: typeof workspace === 'string' ? workspace.slice(0, 100).trim() : (existing?.workspace ?? 'Personal Workspace'),
       updatedAt: new Date().toISOString(),
-      state: state ?? existing?.state ?? {}
+      state: state && typeof state === 'object' ? state : (existing?.state ?? {})
     };
 
-    inMemoryProjects.set(id, updated);
+    safeSetProject(id, updated);
     res.json({ success: true, project: updated });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err?.message || 'Failed to update project' });
@@ -944,6 +1028,9 @@ app.put('/api/projects/:id', (req, res) => {
 app.delete('/api/projects/:id', (req, res) => {
   try {
     const { id } = req.params;
+    if (!id || typeof id !== 'string' || !/^[a-zA-Z0-9_\-]+$/.test(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid project ID format' });
+    }
     const existed = inMemoryProjects.delete(id);
     res.json({ success: existed });
   } catch (err: any) {
