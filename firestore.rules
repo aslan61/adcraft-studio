@@ -53,7 +53,7 @@ service cloud.firestore {
         && data.planName is string && data.planName.size() <= 100
         && data.amount is number && data.amount >= 0
         && data.status in ['completed', 'pending', 'refunded']
-        && data.creditsGranted is number && data.creditsGranted >= 0
+        && data.creditsGranted is number && data.creditsGranted >= 0 && data.creditsGranted <= 10000
         && (!('currency' in data) || (data.currency is string && data.currency.size() <= 10))
         && (!('paymentMethod' in data) || (data.paymentMethod is string && data.paymentMethod.size() <= 50))
         && (!('invoiceNumber' in data) || (data.invoiceNumber is string && data.invoiceNumber.size() <= 64));
@@ -81,15 +81,22 @@ service cloud.firestore {
     // User Profile Document Root
     match /users/{userId} {
       allow get: if isOwner(userId) && isValidId(userId);
-      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming());
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming())
+        && incoming().credits <= 250 && incoming().plan == 'free';
       allow update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming())
         && incoming().uid == existing().uid
-        && incoming().createdAt == existing().createdAt;
+        && incoming().createdAt == existing().createdAt
+        && (
+          incoming().credits <= existing().credits
+          || incoming().credits <= existing().credits + 50
+          || (incoming().plan != existing().plan && incoming().credits <= existing().credits + 10000)
+        );
 
-      // Subcollection: Subscriptions / Transactions
+      // Subcollection: Subscriptions / Transactions (Immutable Audit Ledger)
       match /subscriptions/{subscriptionId} {
         allow get, list: if isOwner(userId) && isValidId(userId);
         allow create: if isOwner(userId) && isValidId(userId) && isValidSubscription(incoming());
+        allow update, delete: if false;
       }
 
       // Subcollection: Saved Campaigns
