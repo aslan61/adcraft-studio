@@ -188,7 +188,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ canvasRef, onOpenAdP
         progress: 100,
         url,
         size: '4.2 MB',
-        timestamp: 'Just now'
+        timestamp: language === 'tr' ? 'Az önce' : 'Just now'
       });
     } catch (err) {
       console.error('Snapshot failed', err);
@@ -234,7 +234,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ canvasRef, onOpenAdP
       status: 'rendering',
       progress: 5,
       size: `${videoExportDuration === 5 ? '14.8' : videoExportDuration === 10 ? '28.5' : '42.1'} MB`,
-      timestamp: 'Just now'
+      timestamp: language === 'tr' ? 'Az önce' : 'Just now'
     });
 
     try {
