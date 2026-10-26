@@ -264,7 +264,7 @@ app.get('/api/health', (req, res) => {
 
   res.json({
     status: 'ok',
-    version: '1.3.0',
+    version: '1.5.0',
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime()),
     geminiKeyConfigured: !!(effectiveKey && effectiveKey.trim()),
@@ -1493,6 +1493,29 @@ async function startServer() {
   httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`AdCraft Studio Server running on http://0.0.0.0:${PORT}`);
   });
+
+  const shutdown = (signal: string) => {
+    console.log(`[Lifecycle] Received ${signal}. Gracefully shutting down AdCraft Studio server...`);
+    clearInterval(rateLimitInterval);
+    httpServer.close(() => {
+      console.log('[Lifecycle] HTTP server successfully closed.');
+      process.exit(0);
+    });
+    setTimeout(() => {
+      console.error('[Lifecycle] Forceful shutdown initiated due to timeout.');
+      process.exit(1);
+    }, 10000).unref();
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[Unhandled Promise Rejection]:', reason);
+});
+process.on('uncaughtException', (error) => {
+  console.error('[Uncaught Process Exception]:', error);
+});
 
 startServer();

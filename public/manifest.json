@@ -1,0 +1,19 @@
+{
+  "name": "AdCraft Studio — Mobile App Ad Creative Synthesizer",
+  "short_name": "AdCraft Studio",
+  "description": "Transforms raw mobile app screenshots and screen recording videos into high-converting, platform-ready marketing creatives for TikTok, Reels, and App Stores.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07090F",
+  "theme_color": "#07090F",
+  "categories": ["productivity", "utilities", "business", "design"],
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
