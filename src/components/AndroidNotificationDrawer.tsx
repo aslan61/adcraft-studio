@@ -26,12 +26,14 @@ import {
 import { useNotificationStore, NotificationItem } from '../store/useNotificationStore';
 import { useAdCraftStore } from '../store/useAdCraftStore';
 import { soundEngine } from '../utils/audioEngine';
+import { useTranslation } from '../i18n/translations';
 
 interface AndroidNotificationDrawerProps {
   onRunTest?: () => void;
 }
 
 export const AndroidNotificationDrawer: React.FC<AndroidNotificationDrawerProps> = ({ onRunTest }) => {
+  const { language } = useTranslation();
   const {
     notifications,
     isDrawerOpen,
@@ -157,10 +159,12 @@ export const AndroidNotificationDrawer: React.FC<AndroidNotificationDrawerProps>
               </div>
               <div className="mt-2">
                 <span className="text-xs font-bold text-white block group-hover:text-indigo-200">
-                  Kreatif QA Testi
+                  {language === 'tr' ? 'Kreatif QA Testi' : 'Creative QA Test'}
                 </span>
                 <span className="text-[10px] text-slate-400 block font-['JetBrains_Mono']">
-                  {lastTestedAt ? 'Test Sonuçları Hazır' : '⚠️ Test Yapılmadı'}
+                  {lastTestedAt
+                    ? (language === 'tr' ? 'Test Sonuçları Hazır' : 'Test Results Ready')
+                    : (language === 'tr' ? '⚠️ Test Yapılmadı' : '⚠️ Not Tested Yet')}
                 </span>
               </div>
             </button>
@@ -186,12 +190,16 @@ export const AndroidNotificationDrawer: React.FC<AndroidNotificationDrawerProps>
                   <Eye className="w-4 h-4" />
                 </div>
                 <span className="text-[10px] font-semibold">
-                  {showSafeZones ? 'AÇIK' : 'KAPALI'}
+                  {showSafeZones ? (language === 'tr' ? 'AÇIK' : 'ON') : (language === 'tr' ? 'KAPALI' : 'OFF')}
                 </span>
               </div>
               <div className="mt-2">
-                <span className="text-xs font-bold block">Güvenli Alanlar</span>
-                <span className="text-[10px] text-slate-400 block">TikTok / Reels Kılavuzu</span>
+                <span className="text-xs font-bold block">
+                  {language === 'tr' ? 'Güvenli Alanlar' : 'Safe Zones'}
+                </span>
+                <span className="text-[10px] text-slate-400 block">
+                  {language === 'tr' ? 'TikTok / Reels Kılavuzu' : 'TikTok / Reels Guide'}
+                </span>
               </div>
             </button>
 
@@ -213,9 +221,13 @@ export const AndroidNotificationDrawer: React.FC<AndroidNotificationDrawerProps>
                   {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold block">Bildirim Sesi</span>
+                  <span className="text-[11px] font-bold block">
+                    {language === 'tr' ? 'Bildirim Sesi' : 'Alert Sound'}
+                  </span>
                   <span className="text-[9px] text-slate-400 block font-['JetBrains_Mono']">
-                    {soundEnabled ? 'Android Zil Sesi' : 'Sessiz'}
+                    {soundEnabled
+                      ? (language === 'tr' ? 'Android Zil Sesi' : 'Android Chime')
+                      : (language === 'tr' ? 'Sessiz' : 'Silent')}
                   </span>
                 </div>
               </div>
@@ -239,9 +251,13 @@ export const AndroidNotificationDrawer: React.FC<AndroidNotificationDrawerProps>
                   <Moon className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold block">Rahatsız Etme</span>
+                  <span className="text-[11px] font-bold block">
+                    {language === 'tr' ? 'Rahatsız Etme' : 'Do Not Disturb'}
+                  </span>
                   <span className="text-[9px] text-slate-400 block font-['JetBrains_Mono']">
-                    {dndEnabled ? 'DND Aktif' : 'Tüm Bildirimler'}
+                    {dndEnabled
+                      ? (language === 'tr' ? 'DND Aktif' : 'DND Active')
+                      : (language === 'tr' ? 'Tüm Bildirimler' : 'All Alerts')}
                   </span>
                 </div>
               </div>
@@ -255,22 +271,26 @@ export const AndroidNotificationDrawer: React.FC<AndroidNotificationDrawerProps>
             <div className="flex items-center gap-2">
               <Smartphone className="w-4 h-4 text-indigo-400 shrink-0" />
               <div className="flex flex-col">
-                <span className="text-xs font-bold text-white">Android Sistem Bildirimleri</span>
-                <span className="text-[10px] text-slate-400">Tarayıcı arkadayken test hatırlatmalarını al</span>
+                <span className="text-xs font-bold text-white">
+                  {language === 'tr' ? 'Android Sistem Bildirimleri' : 'Android System Notifications'}
+                </span>
+                <span className="text-[10px] text-slate-400">
+                  {language === 'tr' ? 'Tarayıcı arkadayken test hatırlatmalarını al' : 'Receive test reminders while browser is in background'}
+                </span>
               </div>
             </div>
             <button
               onClick={requestNativePermission}
               className="px-3 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold shadow transition-all cursor-pointer whitespace-nowrap"
             >
-              İzin Ver
+              {language === 'tr' ? 'İzin Ver' : 'Enable'}
             </button>
           </div>
         ) : (
           <div className="px-4 py-1.5 bg-emerald-950/30 border-b border-emerald-500/20 flex items-center justify-between text-[11px] text-emerald-300">
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Android Sistem Bildirimleri: Aktif</span>
+              <span>{language === 'tr' ? 'Android Sistem Bildirimleri: Aktif' : 'Android System Notifications: Active'}</span>
             </div>
             <span className="text-[10px] text-slate-400 font-['JetBrains_Mono']">OS Push Hazır</span>
           </div>
@@ -281,11 +301,11 @@ export const AndroidNotificationDrawer: React.FC<AndroidNotificationDrawerProps>
           <div className="flex items-center gap-2.5">
             <Bell className="w-4 h-4 text-indigo-400" />
             <h3 className="text-xs font-bold text-white tracking-wide uppercase">
-              Bildirimler
+              {language === 'tr' ? 'Bildirimler' : 'Notifications'}
             </h3>
             {unreadCount > 0 && (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                {unreadCount} yeni
+                {unreadCount} {language === 'tr' ? 'yeni' : 'new'}
               </span>
             )}
           </div>
@@ -295,9 +315,9 @@ export const AndroidNotificationDrawer: React.FC<AndroidNotificationDrawerProps>
               <button
                 onClick={markAllAsRead}
                 className="px-2.5 py-1 rounded-lg text-[11px] font-medium text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
-                title="Tümünü Okundu İşaretle"
+                title={language === 'tr' ? 'Tümünü Okundu İşaretle' : 'Mark All as Read'}
               >
-                Tümü Okundu
+                {language === 'tr' ? 'Tümü Okundu' : 'Mark All Read'}
               </button>
             )}
 
@@ -305,7 +325,7 @@ export const AndroidNotificationDrawer: React.FC<AndroidNotificationDrawerProps>
               <button
                 onClick={clearAllNotifications}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                title="Tümünü Temizle"
+                title={language === 'tr' ? 'Tümünü Temizle' : 'Clear All'}
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -314,7 +334,7 @@ export const AndroidNotificationDrawer: React.FC<AndroidNotificationDrawerProps>
             <button
               onClick={() => setDrawerOpen(false)}
               className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
-              title="Kapat"
+              title={language === 'tr' ? 'Kapat' : 'Close'}
             >
               <X className="w-4 h-4" />
             </button>
@@ -328,15 +348,19 @@ export const AndroidNotificationDrawer: React.FC<AndroidNotificationDrawerProps>
               <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-slate-500 mb-3">
                 <BellOff className="w-6 h-6" />
               </div>
-              <h4 className="text-xs font-semibold text-slate-300">Yeni Bildirim Yok</h4>
+              <h4 className="text-xs font-semibold text-slate-300">
+                {language === 'tr' ? 'Yeni Bildirim Yok' : 'No New Notifications'}
+              </h4>
               <p className="text-[11px] text-slate-500 mt-1 max-w-[240px]">
-                Tüm kreatif testleri ve render işlemleri güncel. Yeni bir uyarı geldiğinde burada görünecek.
+                {language === 'tr'
+                  ? 'Tüm kreatif testleri ve render işlemleri güncel. Yeni bir uyarı geldiğinde burada görünecek.'
+                  : 'All creative compliance tests and renders are up to date. New alerts will appear here.'}
               </p>
               <button
-                onClick={() => triggerTestReminder('Kullanıcı manuel test kontrolü başlattı.')}
+                onClick={() => triggerTestReminder(language === 'tr' ? 'Kullanıcı manuel test kontrolü başlattı.' : 'User initiated manual test check.')}
                 className="mt-4 px-3 py-1.5 rounded-xl text-xs font-medium text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 transition-all cursor-pointer"
               >
-                Örnek Test Bildirimi Gönder
+                {language === 'tr' ? 'Örnek Test Bildirimi Gönder' : 'Send Sample Test Notification'}
               </button>
             </div>
           ) : (

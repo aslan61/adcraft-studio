@@ -33,8 +33,10 @@ import { useAdCraftStore } from './store/useAdCraftStore';
 import { useAuthStore } from './store/useAuthStore';
 import { useNotificationStore } from './store/useNotificationStore';
 import { soundEngine } from './utils/audioEngine';
+import { useTranslation } from './i18n/translations';
 
 export default function App() {
+  const { language } = useTranslation();
   const {
     theme,
     activeView,
@@ -97,14 +99,22 @@ export default function App() {
     // Initial session reminder after 30s if test never run
     const initialTimer = setTimeout(() => {
       if (!lastTestedAt) {
-        triggerTestReminder('Yayın öncesi TikTok ve Reels standartları henüz test edilmedi.');
+        triggerTestReminder(
+          language === 'tr'
+            ? 'Yayın öncesi TikTok ve Reels standartları henüz test edilmedi.'
+            : 'Pre-release TikTok and Reels compliance standards not tested yet.'
+        );
       }
     }, 30000);
 
     // Periodic reminder check every 3 minutes
     const intervalTimer = setInterval(() => {
       if (!lastTestedAt || untestedChangesCount >= 2) {
-        triggerTestReminder('Kreatifte yeni değişiklikler yapıldı fakat test çalıştırılmadı.');
+        triggerTestReminder(
+          language === 'tr'
+            ? 'Kreatifte yeni değişiklikler yapıldı fakat test çalıştırılmadı.'
+            : 'New changes made to creative but QA tests have not been executed.'
+        );
       }
     }, 180000);
 

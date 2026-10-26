@@ -12,12 +12,14 @@ import {
 } from 'lucide-react';
 import { useNotificationStore, NotificationItem } from '../store/useNotificationStore';
 import { soundEngine } from '../utils/audioEngine';
+import { useTranslation } from '../i18n/translations';
 
 interface AndroidHeadsUpBannerProps {
   onRunTest?: () => void;
 }
 
 export const AndroidHeadsUpBanner: React.FC<AndroidHeadsUpBannerProps> = ({ onRunTest }) => {
+  const { language } = useTranslation();
   const { activeHeadsUp, dismissHeadsUp, setDrawerOpen, setQaTestModalOpen } = useNotificationStore();
 
   if (!activeHeadsUp) return null;
@@ -74,10 +76,12 @@ export const AndroidHeadsUpBanner: React.FC<AndroidHeadsUpBannerProps> = ({ onRu
             </span>
             <span className="text-slate-600">•</span>
             <span className="text-[11px] text-indigo-300 font-medium">
-              {activeHeadsUp.category || 'Sistem Bildirimi'}
+              {activeHeadsUp.category || (language === 'tr' ? 'Sistem Bildirimi' : 'System Notification')}
             </span>
             <span className="text-slate-600">•</span>
-            <span className="text-[10px] text-slate-400 font-['JetBrains_Mono']">Şimdi</span>
+            <span className="text-[10px] text-slate-400 font-['JetBrains_Mono']">
+              {language === 'tr' ? 'Şimdi' : 'Now'}
+            </span>
           </div>
 
           <button
@@ -86,7 +90,7 @@ export const AndroidHeadsUpBanner: React.FC<AndroidHeadsUpBannerProps> = ({ onRu
               dismissHeadsUp();
             }}
             className="p-1 rounded-full text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
-            title="Kapat"
+            title={language === 'tr' ? 'Kapat' : 'Close'}
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -117,7 +121,7 @@ export const AndroidHeadsUpBanner: React.FC<AndroidHeadsUpBannerProps> = ({ onRu
             }}
             className="px-3 py-1.5 rounded-full text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-white/[0.06] transition-all cursor-pointer"
           >
-            Bildirim Merkezi
+            {language === 'tr' ? 'Bildirim Merkezi' : 'Notification Center'}
           </button>
 
           {activeHeadsUp.actionLabel && (
