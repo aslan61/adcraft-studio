@@ -219,7 +219,7 @@ ${audit.recommendations.map((r, i) => `${i + 1}. ${r}`).join('\n')}
 
         {/* 4 Hero Stat Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-2xl bg-[#0D111C]/80 border border-white/[0.06] shadow-sm flex flex-col justify-between">
+          <div className="p-4 rounded-2xl studio-interactive-card bg-[#0D111C]/80 border border-white/[0.08] shadow-sm flex flex-col justify-between hover:border-emerald-500/30">
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400 font-medium">
                 {language === 'tr' ? 'Uyumluluk Puanı' : 'Compliance Score'}
@@ -236,7 +236,7 @@ ${audit.recommendations.map((r, i) => `${i + 1}. ${r}`).join('\n')}
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#0D111C]/80 border border-white/[0.06] shadow-sm flex flex-col justify-between">
+          <div className="p-4 rounded-2xl studio-interactive-card bg-[#0D111C]/80 border border-white/[0.08] shadow-sm flex flex-col justify-between hover:border-cyan-500/30">
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400 font-medium">
                 {language === 'tr' ? 'Kanca Gücü' : 'Hook Strength'}
@@ -253,7 +253,7 @@ ${audit.recommendations.map((r, i) => `${i + 1}. ${r}`).join('\n')}
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#0D111C]/80 border border-white/[0.06] shadow-sm flex flex-col justify-between">
+          <div className="p-4 rounded-2xl studio-interactive-card bg-[#0D111C]/80 border border-white/[0.08] shadow-sm flex flex-col justify-between hover:border-indigo-500/30">
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400 font-medium">
                 {language === 'tr' ? 'Virallik Endeksi' : 'Virality Index'}
@@ -270,7 +270,7 @@ ${audit.recommendations.map((r, i) => `${i + 1}. ${r}`).join('\n')}
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#0D111C]/80 border border-white/[0.06] shadow-sm flex flex-col justify-between">
+          <div className="p-4 rounded-2xl studio-interactive-card bg-[#0D111C]/80 border border-white/[0.08] shadow-sm flex flex-col justify-between hover:border-amber-500/30">
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400 font-medium">
                 {language === 'tr' ? 'Tahmini TO (CTR) Artışı' : 'Predicted CTR Lift'}
@@ -384,16 +384,16 @@ ${audit.recommendations.map((r, i) => `${i + 1}. ${r}`).join('\n')}
 
             <div className="h-44 w-full flex items-end gap-2 pt-6 px-2">
               {[95, 88, 82, 75, 71, 68, 65, 63, 60, 58, 56, 54, 52, 51, 50].map((val, idx) => (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+                <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative cursor-pointer" title={`${idx + 1}s: %${val} ${language === 'tr' ? 'izleyici tutma' : 'retention'}`}>
                   <div
                     style={{ height: `${val}%` }}
-                    className={`w-full rounded-t-md transition-all ${
+                    className={`w-full rounded-t-md transition-all duration-200 group-hover:brightness-125 group-hover:scale-y-[1.03] origin-bottom ${
                       idx < 3
-                        ? 'bg-gradient-to-t from-cyan-500 to-indigo-500'
-                        : 'bg-slate-800 hover:bg-slate-700'
+                        ? 'bg-gradient-to-t from-cyan-500 to-indigo-500 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+                        : 'bg-slate-800 group-hover:bg-slate-700'
                     }`}
                   />
-                  <span className="text-[9px] text-slate-500 font-['JetBrains_Mono']">
+                  <span className="text-[9px] text-slate-500 group-hover:text-cyan-300 font-['JetBrains_Mono'] transition-colors">
                     {idx + 1}s
                   </span>
                 </div>

@@ -229,7 +229,7 @@ export const VariationsView: React.FC<VariationsViewProps> = ({ onOpenExportQueu
             <div
               key={v.id || i}
               onClick={() => applyVariation(v)}
-              className="p-4 rounded-2xl bg-[#0A0D15]/80 border border-white/[0.06] hover:border-indigo-500/50 hover:bg-[#0D111C]/90 hover:shadow-[0_8px_24px_rgba(99,102,241,0.15)] transition-all cursor-pointer group flex flex-col justify-between"
+              className="p-4 rounded-2xl studio-interactive-card bg-[#0A0D15]/80 border border-white/[0.08] hover:border-indigo-500/50 hover:bg-[#0D111C]/90 hover:shadow-[0_8px_24px_rgba(99,102,241,0.2)] active:scale-[0.99] transition-all cursor-pointer group flex flex-col justify-between"
             >
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">

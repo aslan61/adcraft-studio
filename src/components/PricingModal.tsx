@@ -118,7 +118,8 @@ export const PricingModal: React.FC = () => {
         </div>
 
         {/* Featured Big Rewarded Action Banner */}
-        <div className="p-5 sm:p-6 rounded-2xl bg-[#0F131D] border border-white/[0.08] shadow-xl mb-6 relative overflow-hidden">
+        <div className="p-5 sm:p-6 rounded-2xl bg-[#0F131D] border border-emerald-500/25 shadow-xl mb-6 relative overflow-hidden studio-interactive-card">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="flex flex-col sm:flex-row items-center justify-between gap-5 relative z-10">
             <div className="text-left w-full sm:w-auto">
               <div className="flex items-center gap-2 mb-1">
