@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+/* Interactive Standards: Explicit Cursor Pointer Rule */
+button,
+[role="button"],
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+select,
+summary {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"],
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
+
 /* Studio Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

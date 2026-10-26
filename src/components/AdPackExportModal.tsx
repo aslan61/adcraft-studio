@@ -375,7 +375,7 @@ export const AdPackExportModal: React.FC<AdPackExportModalProps> = ({
               }}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 isCompleted && !isZipping
-                  ? 'bg-gradient-to-r from-indigo-600 to-cyan-500 text-white hover:brightness-110 shadow-lg shadow-indigo-600/30 active:scale-95'
+                  ? 'bg-gradient-to-r from-indigo-600 to-cyan-500 text-white hover:brightness-110 shadow-lg shadow-indigo-600/30 active:scale-95 cursor-pointer'
                   : 'bg-slate-800 text-slate-500 cursor-not-allowed'
               }`}
             >

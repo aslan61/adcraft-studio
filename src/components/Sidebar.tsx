@@ -151,7 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   setActiveNavTab(item.id);
                   if (item.action) item.action();
                 }}
-                className={`relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all group text-left ${
+                className={`relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all group text-left cursor-pointer active:scale-[0.98] ${
                   isActive
                     ? 'bg-gradient-to-r from-indigo-500/15 via-indigo-500/10 to-transparent text-white border border-indigo-500/30 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_2px_8px_rgba(0,0,0,0.3)]'
                     : 'text-slate-400 hover:bg-white/[0.03] hover:text-slate-200'
@@ -302,7 +302,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               soundEngine.playClick();
               if (onOpenShortcuts) onOpenShortcuts();
             }}
-            className="flex items-center justify-between px-2 py-1 text-slate-400 hover:text-white hover:bg-white/[0.04] rounded-lg transition-colors text-xs font-['Geist'] text-left group"
+            className="flex items-center justify-between px-2 py-1 text-slate-400 hover:text-white hover:bg-white/[0.04] rounded-lg transition-colors text-xs font-['Geist'] text-left group cursor-pointer"
             title={language === 'tr' ? 'Klavye Kısayolları Kılavuzu (?)' : 'Keyboard Shortcuts Guide (?)'}
           >
             <div className="flex items-center gap-2">
@@ -319,7 +319,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               soundEngine.playClick();
               if (onOpenHelp) onOpenHelp();
             }}
-            className="flex items-center gap-2 px-2 py-1 text-slate-400 hover:text-white hover:bg-white/[0.04] rounded-lg transition-colors text-xs font-['Geist'] text-left"
+            className="flex items-center gap-2 px-2 py-1 text-slate-400 hover:text-white hover:bg-white/[0.04] rounded-lg transition-colors text-xs font-['Geist'] text-left cursor-pointer"
           >
             <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
             <span>{t.sidebar.helpDocs}</span>
