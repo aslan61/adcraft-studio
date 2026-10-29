@@ -15,7 +15,7 @@ import { AutoCropPreset, CropConfig, DetectedInterfaceElement, StoryboardData, V
 /**
  * Robust JSON parser that handles LLM markdown code blocks (```json ... ```)
  */
-function cleanAndParseJSON<T = any>(rawText: string): T | null {
+export function cleanAndParseJSON<T = any>(rawText: string): T | null {
   if (!rawText || typeof rawText !== 'string') return null;
   let text = rawText.trim();
 
